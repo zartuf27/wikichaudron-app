@@ -288,6 +288,7 @@ body.wk-on>.wrap{max-width:none}body.wk-on>.wrap>:not(#p-atelier){width:100%;max
   <button role="tab" aria-selected="false" data-tab="rank">Top rentabilité</button>
   <button role="tab" aria-selected="false" data-tab="sim">Simulateur</button>
   <button role="tab" aria-selected="false" data-tab="plan">Planificateur</button>
+  <button role="tab" aria-selected="false" data-tab="ess">Creuset de paradoxe</button>
   <button role="tab" aria-selected="false" data-tab="atelier">Atelier</button>
   <button role="tab" aria-selected="false" data-tab="book">Recettes du jeu</button>
   <button role="tab" aria-selected="false" data-tab="fav">Mes recettes</button>
@@ -370,6 +371,25 @@ body.wk-on>.wrap{max-width:none}body.wk-on>.wrap>:not(#p-atelier){width:100%;max
   </div>
   <p class="note">Les recettes proposées sont les moins chères du mode choisi en haut (chaudron de base ou avancé), celles à marge sûre en premier (≥ 10 %, ou au moins la moitié de la meilleure marge possible pour ce produit ; ⚠ = marge fragile). Les temps tiennent compte de tes réglages.</p>
   <div class="panel result" id="p-res"></div>
+</section>
+
+<section id="p-ess" class="wrap" style="gap:16px" hidden>
+  <div class="panel result" id="e-head"></div>
+  <div class="panel controls">
+    <label class="f">Produit<select id="e-prod"><option value="Oblivion Essence">Essence d'oubli</option><option value="Vitality Essence">Essence de vitalité</option></select></label>
+    <label class="f">Chercher un objet<input type="text" id="e-q" placeholder="ex. Catalyseur" autocomplete="off"></label>
+    <label class="f">Objectif (par minute)<input type="number" id="e-rate" min="0" step="any" value="10"></label>
+    <label class="f">Valeur d'une essence<select id="e-val"><option value="base">Coût de base du jeu</option><option value="use">Meilleur débouché (machine)</option></select></label>
+    <label class="f">Classer par<select id="e-sort"><option value="pmin">Bénéfice par minute</option><option value="rate">Essences par minute</option><option value="cost">Coût par essence</option></select></label>
+    <label class="chk"><input type="checkbox" id="e-known" checked> Coût connu seulement</label>
+    <label class="chk"><input type="checkbox" id="e-liq"> Inclure les liquides</label>
+  </div>
+  <div id="e-cards" class="cards"></div>
+  <div class="row"><h3 id="e-count"></h3><span class="note" id="e-note"></span></div>
+  <div class="tbl"><table><thead><tr><th>Objet mis dans le creuset</th><th class="r">Valeur</th><th class="r">Temps</th><th class="r">Par minute</th><th class="r">Coût / essence</th><th class="r">Bénéfice / min</th><th class="r">Creusets pour l'objectif</th><th class="r">Objets / min (objectif)</th><th class="r">Coût / min (objectif)</th></tr></thead><tbody id="e-body"></tbody></table></div>
+  <h3 id="e-useh">Débouchés</h3>
+  <div class="tbl"><table><thead><tr><th>Machine</th><th>Recette</th><th>Produit</th><th class="r">Temps</th><th class="r">Essences / min</th><th class="r">Valeur / essence</th><th class="r">Bénéfice / min</th></tr></thead><tbody id="e-use"></tbody></table></div>
+  <p class="note" id="e-usenote"></p>
 </section>
 
 <section id="p-atelier" class="wk-app" hidden>
@@ -1450,6 +1470,49 @@ renderLevels();rebuildSell();
 {const bi=$("brand-ico");bi.src=iconURL("machine-22");bi.onload=()=>bi.hidden=false;}
 let startOut=store.get("wc-out","Topaz");if(TARGETS[startOut]==null)startOut="Topaz";
 let startSim=store.get("wc-sim",["Flax Fiber","Soap","Perfumed Soap"]);if(!Array.isArray(startSim))startSim=["Flax Fiber","Soap","Perfumed Soap"];
+/* ===== v19 : onglet Creuset de paradoxe (essence d'oubli et essence de vitalité) ===== */
+{const ESS="Oblivion Essence",VIT="Vitality Essence",PX_HEAT=1200;
+ /* temps de base (s) pour un objet : code du jeu, UParadoxFacilityComponent::EstimatedTotalSeconds */
+ const pxTime=n=>n===ESS||n===VIT?5:Math.min(1500,Math.max(0.5,VAL[IDX[n]]>0?1500/VAL[IDX[n]]:1500));
+ const pv=n=>SELL[n]!=null?SELL[n]:(BASECOST[n]&&!HIDDEN.has(n)?BASECOST[n][0]:null);
+ /* débouchés : valeur d'une essence = (vente attendue des produits − autres ingrédients) ÷ essences consommées */
+ function essUses(P){return(RIDX[P]||{use:[]}).use.filter(o=>!o.hid&&o.t!==21).map(o=>{const x=(V14.rx||{})[o.id]||{},p=x.p||[1,0,0],f=x.f||[];
+   const q=o.ings.find(z=>z[0]===P)[1];let other=0,ok=true;for(const[n,k]of o.ings)if(n!==P){const c=COST[IDX[n]];if(c==null)ok=false;else other+=c*k}
+   const so=pv(o.out[0]),sf=f[0]&&SELL[f[0][0]]!=null?SELL[f[0][0]]:null;let rev=so!=null?p[0]*so*o.out[1]:null;if(rev!=null&&f[0]&&p[1])rev+=p[1]*(sf!=null?sf*f[0][1]:0);
+   const per=ok&&rev!=null?(rev-other)/q:null,runs=60/(o.time/(SET.speed/100));return{o,q,p,f,per,essMin:runs*q,pmin:per!=null?per*runs*q:null}}).sort((a,b)=>(b.per??-Infinity)-(a.per??-Infinity))}
+ function essVal(P){if($("e-val").value==="use"){const u=essUses(P)[0];if(u&&u.per!=null)return u.per}return BASECOST[P]?BASECOST[P][0]:(P===VIT?900:600)}
+ const tfmt=t=>t>=120?`${fmt(Math.round(t/6)/10)} min`:`${fmt(Math.round(t*10)/10)} s`;
+ function runEss(){const P=$("e-prod").value===VIT?VIT:ESS,PI=IDX[P],rate=Math.max(0,+$("e-rate").value||0),q=$("e-q").value.trim().toLowerCase(),known=$("e-known").checked,liq=$("e-liq").checked,V=essVal(P),k=SET.speed/100;
+   store.set("wc-ess",{prod:P,rate,val:$("e-val").value,sort:$("e-sort").value});
+   const fp=FUEL?fuelPerP():null,conv=5/k;
+   /* vitalité : objet → oubli (creuset 1) puis oubli → vitalité (creuset 2, 5 s) ; l'essence d'oubli elle-même ne fait que la seconde étape */
+   const all=NAME.map((n,i)=>({n,i})).filter(({n,i})=>n!==P&&!HIDDEN.has(n)&&(liq||CAT[i]!=="liquid")).map(({n,i})=>{
+     const two=P===VIT&&n!==ESS,t0=pxTime(n),t=t0/k,pm=60/t,cost=COST[i],fuel=fp!=null?PX_HEAT*(t0+(two?5:0))*fp:null,fc=SET.countFuel&&fuel!=null?fuel:0;
+     const gain=cost!=null?V-cost-fc:null,n1=rate*t/60,n2=two?rate*conv/60:0;return{n,i,two,t0,t,pm,cost,fuel,gain,pmin:gain!=null?gain*pm:null,n1,n2}});
+   const rows=all.filter(r=>(!known||r.cost!=null)&&(!q||r.n.toLowerCase().includes(q)||FR[r.i].toLowerCase().includes(q)));
+   const so={pmin:(a,b)=>(b.pmin??-Infinity)-(a.pmin??-Infinity),rate:(a,b)=>b.pm-a.pm||(a.cost??Infinity)-(b.cost??Infinity),cost:(a,b)=>(a.cost??Infinity)-(b.cost??Infinity)||b.pm-a.pm}[$("e-sort").value];rows.sort(so);
+   const fast=all.filter(r=>r.cost!=null&&r.t0===0.5).sort((a,b)=>a.cost-b.cost)[0],best=all.filter(r=>r.pmin!=null).sort((a,b)=>b.pmin-a.pmin)[0],cheap=all.filter(r=>r.cost!=null).sort((a,b)=>a.cost-b.cost||b.pm-a.pm)[0];
+   $("e-val").options[0].textContent=`Coût de base du jeu (${fmt(BASECOST[P]?BASECOST[P][0]:0)} cu)`;
+   $("e-head").innerHTML=`<div class="sh-head">${mIco(21,"xl")}<div><h2>Creuset de paradoxe · ${esc(FR[PI])}</h2><div class="en">${P===ESS?`Transforme n'importe quel objet en ${esc(FR[PI])} : un objet donne une essence.`:`Seule l'${esc(FR[IDX[ESS]])} donne une ${esc(FR[PI])} (5 s). Depuis un autre objet, il faut deux creusets à la suite : objet → ${esc(FR[IDX[ESS]])} → ${esc(FR[PI])}.`}</div></div></div>
+   <div class="kv"><div><span>Temps de base</span><b>1500 ÷ valeur</b><small class="en">entre 0,5 s et 1500 s</small></div><div><span>Le plus rapide</span><b class="num">${fmt(120*k)} / min</b><small class="en">objet de valeur ≥ 3000</small></div><div><span>Essence ↔ essence</span><b class="num">5 s</b><small class="en">${fmt(12*k)} / min par creuset</small></div><div><span>Chauffe</span><b class="num">${fmt(PX_HEAT*k)} P/s</b><small class="en">par creuset au travail</small></div><div><span>Valeur retenue</span><b>${cu(V)}</b><small class="en">${$("e-val").value==="use"?"meilleur débouché":"coût de base"}</small></div></div>
+   <p class="note">Règles lues dans le code du jeu (composant <code>ParadoxFacility</code>) : le temps dépend seulement de la valeur au chaudron de l'objet, pas de son prix. Vitesse de production ${SET.speed} % appliquée.</p>`;
+   $("e-note").textContent=P===ESS?"Un objet donne une essence. Par minute = pour un creuset, avec ta vitesse de production. Bénéfice = valeur retenue − coût de l'objet (− combustible si l'option est active).":`Par minute = ce que sort un creuset de première étape ; la conversion en vitalité demande en plus un creuset pour ${fmt(12*k)} essences par minute. Bénéfice = valeur retenue − coût de l'objet (− combustible des deux étapes si l'option est active).`;
+   const path=r=>r.two?`${ingChips([[r.n,1]])}<span class="plus">→</span>${ingChips([[ESS,1]])}<span class="plus">→</span>${ingChips([[P,1]])}`:`${ingChips([[r.n,1]])}<span class="plus">→</span>${ingChips([[P,1]])}`;
+   const needH=r=>`<b class="num">${Math.ceil(r.n1-1e-9)+(r.two?Math.ceil(r.n2-1e-9):0)}</b> <small class="en">(${fmt(r.n1)}${r.two?` + ${fmt(r.n2)} conversion`:""})</small>`;
+   const cardR=(title,r,top)=>r?`<div class="card${top?" top":""}"><span class="k">${title}</span><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${path(r)}</div><div class="stats"><span>Valeur <b class="num">${fmt(VAL[r.i])}</b></span><span>${tfmt(r.t)} · <b class="num">${fmt(r.pm)}</b>/min</span><span>Coût <b>${cu(r.cost)}</b></span><span>Bénéfice / min <b>${money(r.pmin)}</b></span><span>Creusets pour ${fmt(rate)}/min ${needH(r)}</span></div></div>`:card(false,title,null);
+   $("e-cards").innerHTML=cardR("Meilleur bénéfice par minute",best,true)+cardR("Le moins cher des plus rapides (0,5 s)",fast)+cardR("L'objet le moins cher",cheap);
+   $("e-count").textContent=`${rows.length} objets${rows.length>200?" · 200 premiers affichés":""}`;
+   $("e-body").innerHTML=rows.length?rows.slice(0,200).map(r=>`<tr><td>${r.two?path(r):ingChips([[r.n,1]])}</td><td class="r num">${fmt(VAL[r.i])}</td><td class="r num">${tfmt(r.t)}${r.two?` <small class="en">+ ${fmt(Math.round(conv*10)/10)} s</small>`:""}</td><td class="r num"><b>${fmt(r.pm)}</b></td><td class="r">${cu(r.cost)}</td><td class="r">${money(r.pmin)}</td><td class="r">${needH(r)}</td><td class="r num">${fmt(rate)}</td><td class="r">${r.cost!=null?cu((r.cost+(SET.countFuel&&r.fuel!=null?r.fuel:0))*rate):cu(null)}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">Aucun objet.</td></tr>`;
+   const us=essUses(P);$("e-useh").textContent=`Débouchés de l'${FR[PI].toLowerCase()}`;
+   $("e-use").innerHTML=us.length?us.map(u=>`<tr><td style="white-space:nowrap">${mIco(u.o.t,"md")}${esc(machName(u.o.t))}</td><td>${ingChips(u.o.ings)}</td><td>${ingChips([u.o.out])}${u.p[0]<1?` <span class="pill" title="Taux de réussite de la recette${u.f[0]?" ; raté : "+esc(FR[IDX[u.f[0][0]]]):""}">${Math.round(u.p[0]*100)} %</span>`:""}${SELL[u.o.out[0]]==null?' <span class="pill thin" title="Non vendable : valeur = coût de base du jeu">intermédiaire</span>':""}</td><td class="r num">${fmt(u.o.time)} s</td><td class="r num">${fmt(u.essMin)}</td><td class="r">${u.per!=null?money(u.per):'<span class="en">?</span>'}</td><td class="r">${money(u.pmin)}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">Aucun débouché connu.</td></tr>`;
+   $("e-usenote").textContent=`Valeur / essence = (prix de vente du produit, ou son coût de base s'il n'est pas vendable, × réussite + prix du produit raté s'il est vendable × échec − coût des autres ingrédients) ÷ essences consommées. Par minute = pour une machine, temps de base ÷ vitesse ${SET.speed} % (modèles améliorés non comptés).`}
+ const st=store.get("wc-ess",null);if(st&&typeof st==="object"){if([ESS,VIT].includes(st.prod))$("e-prod").value=st.prod;if(+st.rate>=0)$("e-rate").value=st.rate;if(["base","use"].includes(st.val))$("e-val").value=st.val;if(["pmin","rate","cost"].includes(st.sort))$("e-sort").value=st.sort}
+ ["e-prod","e-val","e-sort","e-known","e-liq"].forEach(id=>$(id).addEventListener("change",runEss));["e-rate","e-q"].forEach(id=>$(id).addEventListener("input",runEss));
+ TABS.push("ess");dirty.ess=true;
+ const _showE=show;show=function(t){_showE(t);if(t==="ess"&&dirty.ess){runEss();dirty.ess=false}};
+ const _mdE=markDirty;markDirty=function(){_mdE();dirty.ess=true};
+ window.runEss=runEss}
+
 let startTab=store.get("wc-tab","discover");const h=(location.hash||"").slice(1);if(TABS.includes(h))startTab=h;
 $("s-out").value=startOut;$("s-outq").value=frOf(startOut);$("m-a").value=frOf(startSim[0]||"");$("m-b").value=frOf(startSim[1]||"");$("m-c").value=startSim[2]?frOf(startSim[2]):"";
 const su=store.get("wc-use","Flax");if(IDX[su]!=null)$("u-in").value=FR[IDX[su]];
