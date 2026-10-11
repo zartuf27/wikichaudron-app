@@ -717,11 +717,24 @@ function runSim(){const raw=SLOTS.map(id=>$(id).value);const ids=[],bad=[];
   <div class="barlab"><span>${prev?`← ${esc(frOf(prev.n))} (${fmt(prev.t)})`:"—"}</span><span>${next?`${esc(frOf(next.n))} (${fmt(next.t)}) →`:"—"}</span></div>
   <p class="note">Zone verte : valeurs qui donnent ${esc(frOf(r.out))}. Trait doré : ta valeur.</p>
   <div class="calc">${esc(lines)}</div>
+  <h3>Entrées par minute</h3>
+  <div class="row"><label class="f">Sortie lue en jeu (par chaudron, /min)<input type="number" id="m-io-rate" min="0" step="any" value="${+r.perMin.toFixed(2)}"></label><label class="f">Nombre de chaudrons<input type="number" id="m-io-n" min="1" step="1" value="${store.get("wc-simn",1)}"></label></div>
+  <div class="tbl"><table><thead><tr><th>Objet</th><th class="r">Par fabrication</th><th class="r">Par minute</th><th class="r">Convoyeurs</th></tr></thead><tbody id="m-io-body"></tbody></table></div>
+  <p class="note" id="m-io-sum"></p>
+  <p class="note">Le jeu n'affiche que la production du chaudron. Chaque fabrication consomme un objet par emplacement (un doublon compte deux fois) et sort un seul produit : les entrées par minute valent donc la sortie par minute multipliée par le nombre d'emplacements occupés par chaque objet. Valeur proposée : la cadence calculée avec ta vitesse de production (${SET.speed} %). Remplace-la par le chiffre affiché en jeu.</p>
   <div class="stats"><span>Coût ingrédients <b>${cu(r.cost)}</b></span><span>Vente ${cu(r.sell)}</span><span>Bénéfice <b>${money(r.profit)}</b></span><span>Rendement <b>${ratioHTML(r.ratio)}</b></span><span>vs revente <b>${money(r.gainResale)}</b></span></div>
   ${sameOut?'<p class="note warn">Un ingrédient est aussi le produit : ce genre de boucle est perdant dans le jeu.</p>':""}
   ${r.mode==="adv"&&MODE!=="adv"?'<p class="note warn">Avec deux ingrédients seulement, même le chaudron de base applique la règle de la différence.</p>':""}
   ${r.cost==null?'<p class="note">Un coût d\'ingrédient manque : ajoute-le dans « Valeurs et coûts ».</p>':""}
-  <div class="acts">${starBtn(r)}${copyBtn(r)}</div>`}
+  <div class="acts">${starBtn(r)}${copyBtn(r)}</div>`;simIO(r)}
+let SIMR=null;
+function simIO(r){if(r)SIMR=r;r=SIMR;const b=$("m-io-body");if(!b||!r||!r.out)return;
+  const rate=Math.max(0,+$("m-io-rate").value||0),n=Math.max(1,Math.round(+$("m-io-n").value||1));store.set("wc-simn",n);
+  const cnt={},belt=SET.belt||60,nb=q=>Math.ceil(q/belt-1e-9);r.ids.forEach(i=>cnt[i]=(cnt[i]||0)+1);const out=rate*n;
+  b.innerHTML=Object.keys(cnt).map(i=>{const nm=NAME[i],q=cnt[i]*out;return`<tr><td>${ingChips([[nm,1]])}</td><td class="r num">${cnt[i]}</td><td class="r num"><b>${fmt(q)}</b></td><td class="r num">${liquid(nm)?"tuyau":nb(q)}</td></tr>`}).join("")
+    +`<tr><td><span class="en">Sortie :</span> ${ingChips([[r.out,1]])}</td><td class="r num">1</td><td class="r num"><b>${fmt(out)}</b></td><td class="r num">${nb(out)}</td></tr>`;
+  $("m-io-sum").innerHTML=`Pour ${n} chaudron${n>1?"s":""} : ${fmt(r.ids.length*out)} objets entrent par minute, ${fmt(out)} sortent. Coût des ingrédients ${r.cost!=null?cu(r.cost*out):"?"} par minute${r.sell!=null?` · vente ${cu(r.sell*out)} par minute`:""}. Convoyeurs à ${fmt(belt)} objets/min.`}
+$("m-res").addEventListener("input",e=>{if(e.target.id==="m-io-rate"||e.target.id==="m-io-n")simIO()});
 SLOTS.forEach(id=>$(id).addEventListener("input",runSim));
 $("m-swap").addEventListener("click",()=>{const exB=[["Flax Fiber","Soap","Perfumed Soap"],["Healing Potion","Salt","Bandage"],["Perfumed Soap","Mortar","Charcoal"],["Soap","Soap Powder","Linen Thread"],["Linen Thread","Linen Thread","Linen Rope"],["Logs","Logs","Silver Coin"],["Flax","Flax Fiber","Gloom Spores"],["Small Wooden Gear","Small Wooden Gear","Small Wooden Gear"],["Perfumed Soap","Malachite","Bandage"]];
   const exA=[["Perfumed Soap","Salt"],["Silver Coin","Soap"],["Unstable Catalyst","Unstable Catalyst"],["Lapis Lazuli","Fertile Catalyst"],["Coal","Flax"],["Topaz","Bandage"]];
