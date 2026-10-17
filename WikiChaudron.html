@@ -241,6 +241,10 @@ body.wk-on>.wrap{max-width:none}body.wk-on>.wrap>:not(#p-atelier){width:100%;max
 .lv{display:grid;grid-template-columns:minmax(150px,1.4fr) auto auto minmax(80px,auto);gap:8px;align-items:center;font-size:.86rem}
 .lv input{width:70px;margin-left:4px}.lv label{color:var(--muted);white-space:nowrap}.lv b{text-align:right}
 @media (max-width:640px){.lv{grid-template-columns:1fr 1fr}.lv>span:first-child{grid-column:1/-1}}
+.pl-h{margin:18px 0 0;font-family:Spectral,serif;font-size:1.35rem}
+.pl-list{display:flex;flex-wrap:wrap;gap:6px 10px;margin:10px 0}
+.pl-h3{margin:14px 0 0;font-size:1.05rem}.pl-buy{font-size:.82rem;color:var(--muted);display:inline-block;max-width:260px}.pl-sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem;margin:2px 0}
+.pl-c{display:inline-flex;align-items:center;gap:4px}.pl-c small{color:var(--muted,#888)}
 </style>
 </head>
 <body>
@@ -287,6 +291,7 @@ body.wk-on>.wrap{max-width:none}body.wk-on>.wrap>:not(#p-atelier){width:100%;max
   <button role="tab" aria-selected="false" data-tab="sim">Simulateur</button>
   <button role="tab" aria-selected="false" data-tab="plan">Planificateur</button>
   <button role="tab" aria-selected="false" data-tab="ess">Creuset de paradoxe</button>
+  <button role="tab" aria-selected="false" data-tab="plant">Plantes</button>
   <button role="tab" aria-selected="false" data-tab="atelier">Atelier</button>
   <button role="tab" aria-selected="false" data-tab="book">Recettes du jeu</button>
   <button role="tab" aria-selected="false" data-tab="fav">Mes recettes</button>
@@ -388,6 +393,47 @@ body.wk-on>.wrap{max-width:none}body.wk-on>.wrap>:not(#p-atelier){width:100%;max
   <h3 id="e-useh">Débouchés</h3>
   <div class="tbl"><table><thead><tr><th>Machine</th><th>Recette</th><th>Produit</th><th class="r">Temps</th><th class="r">Essences / min</th><th class="r">Valeur / essence</th><th class="r">Bénéfice / min</th></tr></thead><tbody id="e-use"></tbody></table></div>
   <p class="note" id="e-usenote"></p>
+</section>
+
+<section id="p-plant" class="wrap" style="gap:16px" hidden>
+  <div class="panel result" id="pl-head"></div>
+  <div class="panel controls">
+    <label class="f">Chaudron<select id="pl-mode"><option value="both">Les deux</option><option value="basic">Chaudron de base (3 ingrédients)</option><option value="adv">Chaudron avancé (2 ingrédients)</option></select></label>
+    <label class="f">Coût des plantes<select id="pl-cost"><option value="grow" selected>Coût de culture (graine + engrais)</option><option value="base">Coût de base du jeu</option></select></label>
+    <label class="f">Engrais<select id="pl-fert"></select></label>
+    <label class="f">Marge minimale<select id="pl-margin"><option value="0">Toutes</option><option value="5" selected>≥ 5 %</option><option value="10">≥ 10 %</option><option value="20">≥ 20 %</option></select></label>
+    <label class="f">Classer par<select id="pl-sort"><option value="pmin">Bénéfice par minute</option><option value="profit">Bénéfice par fabrication</option><option value="ratio">Rendement (vente ÷ coût)</option></select></label>
+    <label class="chk"><input type="checkbox" id="pl-seed" checked> Graines comme ingrédient</label>
+    <label class="chk"><input type="checkbox" id="pl-der"> Dérivés de plantes (fibre, poudres, fil…)</label>
+    <label class="chk"><input type="checkbox" id="pl-inter"> Produits intermédiaires (valeur = coût de base)</label>
+  </div>
+  <h2 class="pl-h">💰 Rentable</h2>
+  <div id="pl-cards" class="cards"></div>
+  <div class="row"><h3 id="pl-count"></h3><span class="note" id="pl-note"></span></div>
+  <div class="tbl"><table><thead><tr><th>Produit</th><th>Chaudron</th><th>Recette</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Vente</th><th class="r">Bénéfice</th><th class="r">Par minute</th><th class="r">Rendement</th><th></th></tr></thead><tbody id="pl-body"></tbody></table></div>
+  <h2 class="pl-h">🧘 Je me facilite la vie</h2>
+  <p class="note">Ce que les plantes permettent de faire directement au chaudron, classé par nombre d'étapes évitées par rapport à la chaîne normale de machines. Recette la moins chère de chaque produit avec la marge choisie.</p>
+  <div id="pl-ecards" class="cards"></div>
+  <div class="row"><h3 id="pl-ecount"></h3></div>
+  <div class="tbl"><table><thead><tr><th>Produit</th><th>Chaudron</th><th>Recette aux plantes</th><th class="r">Marge</th><th class="r">Chaîne normale</th><th class="r">Avec les plantes</th><th class="r">Étapes évitées</th><th>Achats évités</th><th class="r">Coût plantes</th><th class="r">Coût de base</th><th class="r">Économie</th><th></th></tr></thead><tbody id="pl-ebody"></tbody></table></div>
+  <h2 class="pl-h">💡 Trucs malins</h2>
+  <div id="pl-tips" class="cards"></div>
+  <h3 class="pl-h3">Plante + 1 matière première</h3>
+  <p class="note">Des plantes et <b>un seul</b> objet acheté brut (bûche, calcaire, minerais, bûche pourrie, sel gemme, quartz, météorite). Souvent plus rentable ou plus sûr qu'avec les plantes seules : la matière première sert à ajuster la somme.</p>
+  <div id="pl-rcards" class="cards"></div>
+  <div class="row"><h3 id="pl-rcount"></h3></div>
+  <div class="tbl"><table><thead><tr><th>Produit</th><th>Chaudron</th><th>Recette</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Vente</th><th class="r">Bénéfice</th><th class="r">Par minute</th><th class="r">vs plantes seules</th><th></th></tr></thead><tbody id="pl-rbody"></tbody></table></div>
+  <h3 class="pl-h3">Deux chaudrons à la suite</h3>
+  <p class="note">Le chaudron 1 fabrique un ingrédient avec des plantes seules, le chaudron 2 le mélange à d'autres plantes. Seulement des plantes en entrée, mais un produit plus cher à la sortie. « Chaudrons » = chaudron 2 + chaudrons 1 nécessaires pour le suivre ; le bénéfice par chaudron permet de comparer avec une recette directe.</p>
+  <div class="row"><h3 id="pl-2count"></h3></div>
+  <div class="tbl"><table><thead><tr><th>Produit</th><th>Chaudron 2</th><th>Recette</th><th>Préparé au chaudron 1</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Vente</th><th class="r">Chaudrons</th><th class="r">Bénéfice / min</th><th class="r">Par chaudron</th><th class="r">vs plantes seules</th><th></th></tr></thead><tbody id="pl-2body"></tbody></table></div>
+  <h2 class="pl-h">📜 Toutes les recettes 100 % plantes</h2>
+  <div class="panel controls">
+    <label class="f">Produit<select id="pl-out"></select></label>
+    <label class="f">Classer par<select id="pl-asort"><option value="cost">Coût</option><option value="margin">Marge</option><option value="pmin">Bénéfice par minute</option></select></label>
+  </div>
+  <div class="row"><h3 id="pl-acount"></h3></div>
+  <div class="tbl"><table><thead><tr><th>Produit</th><th>Chaudron</th><th>Recette</th><th class="r">Somme</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Valeur</th><th class="r">Bénéfice / min</th><th></th></tr></thead><tbody id="pl-abody"></tbody></table></div>
 </section>
 
 <section id="p-atelier" class="wk-app" hidden>
@@ -1570,6 +1616,140 @@ let startSim=store.get("wc-sim",["Flax Fiber","Soap","Perfumed Soap"]);if(!Array
  const _showE=show;show=function(t){_showE(t);if(t==="ess"&&dirty.ess){runEss();dirty.ess=false}};
  const _mdE=markDirty;markDirty=function(){_mdE();dirty.ess=true};
  window.runEss=runEss}
+
+/* ===== v22 : onglet Plantes (recettes du chaudron avec seulement des plantes) ===== */
+{/* DT_PlantSeedConfig : graine → [plante, nombre récolté, nutriments par récolte, produit secondaire, nombre] */
+ const PSEED={"Flax Seeds":["Flax",200,24],"Sage Seeds":["Sage",180,36],"Redcurrant Seeds":["Redcurrant",150,144],"Chamomile Seeds":["Chamomile",140,720],"Lavender Seeds":["Lavender",120,2160],"Gentian Seeds":["Gentian",80,6000,"Gentian Nectar",80]};
+ const PFERT={"Basic Fertilizer":144,"Advanced Fertilizer":720,"Growth Potion":6480};
+ const SEEDOF={};Object.entries(PSEED).forEach(([sd,x])=>{SEEDOF[x[0]]=sd;if(x[3])SEEDOF[x[3]]=sd});
+ const tagOf=n=>(XI[n]||[])[3]||[];
+ const HERBS=NAME.filter(n=>tagOf(n).includes("Herbes")&&!HIDDEN.has(n)&&TARGETS[n]==null),SEEDS=NAME.filter(n=>tagOf(n).includes("Graines")&&!HIDDEN.has(n));
+ const PLANT=new Set([...HERBS,...SEEDS]);
+ /* dérivés : objets solides dont une recette visible n'utilise que des plantes (ou d'autres dérivés) */
+ const DER={};{let ch=true;while(ch){ch=false;RECIPES.forEach(o=>{const n=o.out[0];if(o.hid||PLANT.has(n)||DER[n]||HIDDEN.has(n)||CAT[IDX[n]]==="liquid"||TARGETS[n]!=null||!o.ings.length)return;
+   if(o.ings.every(([i])=>PLANT.has(i)||DER[i])){DER[n]=o;ch=true}})}}
+ /* étapes pour obtenir un ingrédient : une plante se récolte (1 étape), une graine s'achète (0) */
+ const STEPS={};const stepsOf=n=>{if(STEPS[n])return STEPS[n];const st=new Set();if(DER[n]){st.add(n);DER[n].ings.forEach(([i])=>stepsOf(i).forEach(x=>st.add(x)))}else if(HERBS.includes(n))st.add(n);return STEPS[n]=st};
+ const fertOpts=()=>Object.keys(PFERT).filter(f=>IDX[f]!=null&&COST[IDX[f]]!=null).map(f=>({f,ppp:COST[IDX[f]]/PFERT[f]})).sort((a,b)=>a.ppp-b.ppp);
+ function fertPick(){const fo=fertOpts(),v=$("pl-fert").value;return fo.find(x=>x.f===v)||fo[0]||null}
+ let PC={};
+ function plantCost(n){if(PC[n]!==undefined)return PC[n];let c=COST[IDX[n]];
+   if(typeof OVR[n]!=="number"&&$("pl-cost").value==="grow"){const sd=SEEDOF[n],fp=fertPick();
+     if(sd&&COST[IDX[sd]]!=null&&fp){const x=PSEED[sd];c=(COST[IDX[sd]]+x[2]*fp.ppp)/(x[1]+(x[4]||0))}
+     else if(DER[n]){let t=0;for(const[i,q]of DER[n].ings){const k=plantCost(i);if(k==null){t=null;break}t+=k*q}if(t!=null&&DER[n].out[1]>0)c=t/DER[n].out[1]}}
+   return PC[n]=c??null}
+ /* chaîne normale : même choix de recette que l'Atelier (recettes fixes du chaudron du livre comprises ; étapes = objets fabriqués distincts) */
+ let SC={};
+ function stdChain(item){if(SC[item])return SC[item];const steps=new Set(),mach=new Set(),buy=new Set();let depth=0;
+   (function go(it,path,d){const R0=(RIDX[it]||{make:[]}).make.filter(o=>!o.hid&&!o.ings.some(([i])=>path.has(i))),RU=typeof isUnl==="function"?R0.filter(o=>isUnl(o.id)):R0,R=RU.length?RU:R0;
+     const sd=R.filter(o=>!o.alt),pk=(sd.length?sd:R).map(o=>({o,c:recCost(o)})).sort((a,b)=>(a.c??Infinity)-(b.c??Infinity))[0];
+     if(!pk){buy.add(it);return}depth=Math.max(depth,d+1);if(steps.has(it))return;steps.add(it);mach.add(pk.o.t);const np=new Set(path);np.add(it);pk.o.ings.forEach(([n])=>go(n,np,d+1))})(item,new Set([item]),0);
+   return SC[item]={steps:steps.size,mach:mach.size,depth,buy:[...buy]}}
+ const cauName=m=>m==="adv"?"Chaudron avancé":"Chaudron de base";
+ const cauPill=m=>`<span class="pill ${m==="adv"?"adv":""}" title="${cauName(m)}">${m==="adv"?"avancé":"base"}</span>`;
+ const simBtn=r=>`<button class="btn ghost sm" type="button" data-plsim="${esc(r.mode+"|"+r.ids.map(i=>NAME[i]).join("|"))}" title="Ouvrir dans le simulateur">Simuler</button>`;
+ const val=n=>SELL[n]!=null?SELL[n]:(BASECOST[n]&&!HIDDEN.has(n)?BASECOST[n][0]:null);
+ let ALL=[];
+ function fix(r){r.cost=0;for(const i of r.ids){const c=plantCost(NAME[i]);if(c==null){r.cost=null;break}r.cost+=c}
+   r.inter=SELL[r.out]==null;r.val=val(r.out);r.sell=r.val;const fc=SET.countFuel&&r.fuelCost!=null?r.fuelCost:0;
+   r.profit=r.val!=null&&r.cost!=null?r.val-r.cost-fc:null;r.ratio=r.val!=null&&r.cost!=null&&r.cost+fc>0?r.val/(r.cost+fc):null;r.profitMin=r.profit!=null?r.profit*r.perMin:null;
+   const st=new Set();r.ids.forEach(i=>stepsOf(NAME[i]).forEach(x=>st.add(x)));r.route=1+st.size;r.routeSet=st;return r}
+ function enumerate(){PC={};SC={};const mode=$("pl-mode").value,inc=n=>(HERBS.includes(n)||($("pl-seed").checked&&SEEDS.includes(n))||($("pl-der").checked&&DER[n]))&&plantCost(n)!=null;
+   const IN=ORDER.filter(i=>inc(NAME[i])),out=[];const ok=r=>r&&r.out&&!r.def&&!r.ids.includes(IDX[r.out]);
+   for(let a=0;a<IN.length;a++)for(let b=a;b<IN.length;b++){if(mode!=="basic"){const r=evalPair([IN[a],IN[b]]);if(ok(r))out.push(fix(r))}
+     if(mode!=="adv")for(let c=b;c<IN.length;c++){const r=evalTriple([IN[a],IN[b],IN[c]]);if(ok(r))out.push(fix(r))}}
+   return{IN,out}}
+ const sorts={pmin:(a,b)=>(b.profitMin??-Infinity)-(a.profitMin??-Infinity),profit:(a,b)=>(b.profit??-Infinity)-(a.profit??-Infinity),ratio:(a,b)=>(b.ratio??-Infinity)-(a.ratio??-Infinity),cost:(a,b)=>(a.cost??Infinity)-(b.cost??Infinity)||b.mpct-a.mpct,margin:(a,b)=>b.mpct-a.mpct||(a.cost??Infinity)-(b.cost??Infinity)};
+ const usePerMin=r=>{const c={};r.ids.forEach(i=>c[i]=(c[i]||0)+1);return Object.entries(c).map(([i,k])=>`${esc(FR[i])} ${fmt(k*r.perMin)}/min`).join(" · ")};
+ function runPlant(){const minm=+$("pl-margin").value,inter=$("pl-inter").checked,grow=$("pl-cost").value==="grow";
+   store.set("wc-plant2",{mode:$("pl-mode").value,cost:$("pl-cost").value,fert:$("pl-fert").value,margin:$("pl-margin").value,sort:$("pl-sort").value,seed:$("pl-seed").checked,der:$("pl-der").checked,inter,out:$("pl-out").value,asort:$("pl-asort").value});
+   $("pl-fert").innerHTML=fertOpts().map(x=>`<option value="${esc(x.f)}">${esc(FR[IDX[x.f]])} · ${fmt(x.ppp*1000)} cu / 1000 nutriments</option>`).join("");const sf=(store.get("wc-plant2",{})||{}).fert;if(sf&&PFERT[sf])$("pl-fert").value=sf;$("pl-fert").disabled=!grow;
+   const t0=performance.now(),{IN,out}=enumerate();ALL=out;const fp=fertPick();
+   const chip=n=>{const c=plantCost(n);return`<span class="pl-c">${ingChips([[n,1]])}<small class="num">${c!=null?fmt(c)+" cu":"?"}</small></span>`};
+   $("pl-head").innerHTML=`<div class="sh-head">${mIco(3,"xl")}<div><h2>Plantes au chaudron</h2><div class="en">Seulement des plantes (herbes${$("pl-seed").checked?", graines":""}${$("pl-der").checked?", dérivés":""}) dans le ${$("pl-mode").value==="both"?"chaudron de base et le chaudron avancé":$("pl-mode").value==="adv"?"chaudron avancé":"chaudron de base"}. ${fmt(out.length)} mélanges évalués avec les règles du jeu.</div></div></div>
+   <div class="pl-list">${IN.map(i=>chip(NAME[i])).join("")}</div>
+   <p class="note">${grow?`Coût de culture = (prix de la graine + nutriments d'une récolte × ${fp?esc(FR[IDX[fp.f]]).toLowerCase()+" à "+fmt(fp.ppp*1000)+" cu / 1000":"engrais"}) ÷ plantes récoltées (gentiane : partagé avec le nectar). Feuille et cœur d'arbre monde, champignon d'ombre : coût de base. Un coût modifié dans « Valeurs et coûts » reste prioritaire.`:"Coût de base du jeu (modifiable dans « Valeurs et coûts »). Choisis « coût de culture » si tu fais pousser tes plantes."} Les plantes ne s'achètent pas : seules les graines se vendent chez le marchand.</p>`;
+   /* --- rentable : meilleure recette par produit et par chaudron --- */
+   const best={};out.forEach(r=>{if(r.profit==null||r.mpct<minm||(r.inter&&!inter))return;const k=r.mode+"|"+r.out,b=best[k];if(!b||sorts.pmin(r,b)<0||(r.profitMin===b.profitMin&&r.mpct>b.mpct))best[k]=r});
+   const rows=Object.values(best).filter(r=>r.profit>0).sort(sorts[$("pl-sort").value]);
+   $("pl-cards").innerHTML=rows.length?rows.slice(0,3).map((r,k)=>card(k===0,k===0?"Plantes : la plus rentable":k===1?"Deuxième":"Troisième",r,`<span>Par chaudron : ${usePerMin(r)}</span>`)).join(""):card(false,"Plantes rentables",null);
+   $("pl-count").textContent=`${rows.length} produits rentables${inter?" (vendables et intermédiaires)":" à vendre"} · ${Math.round(performance.now()-t0)} ms`;
+   $("pl-note").textContent=`Une ligne par produit et par chaudron : sa recette aux plantes la plus rentable (bénéfice par minute) avec une marge ≥ ${minm} %. ${SET.countFuel?"Combustible déduit.":"Hors combustible."}`;
+   $("pl-body").innerHTML=rows.length?rows.map(r=>`<tr><td>${ico(r.out,"md")}<b>${esc(frOf(r.out))}</b>${r.inter?' <span class="pill" title="Non vendable : valeur = coût de base du jeu (économie par rapport à sa fabrication normale)">intermédiaire</span>':""}</td><td>${cauPill(r.mode)}</td><td>${recipeHTML(r.ids)}</td><td class="r">${mpill(r)}</td><td class="r">${cu(r.cost)}</td><td class="r">${cu(r.val)}</td><td class="r">${money(r.profit)}</td><td class="r">${money(r.profitMin)}</td><td class="r">${ratioHTML(r.ratio)}</td><td><span class="acts">${starBtn(r)}${simBtn(r)}</span></td></tr>`).join(""):`<tr><td colspan="10" class="empty">Aucune recette rentable avec ces filtres. Baisse la marge minimale ou ajoute les produits intermédiaires.</td></tr>`;
+   /* --- je me facilite la vie : recette la moins chère par produit, comparée à la chaîne normale --- */
+   const easy={};out.forEach(r=>{if(r.cost==null||r.mpct<minm)return;const k=r.mode+"|"+r.out,b=easy[k];if(!b||r.cost<b.cost||(r.cost===b.cost&&r.mpct>b.mpct))easy[k]=r});
+   const er=Object.values(easy).map(r=>{const c=stdChain(r.out);r.std=c;r.saved=c.steps-r.route;r.only=c.steps===0;r.buyAv=r.only?[]:c.buy.filter(n=>!PLANT.has(n)&&!DER[n]);return r}).filter(r=>r.saved>0||r.only)
+     .sort((a,b)=>a.only-b.only||b.saved-a.saved||(a.cost??Infinity)-(b.cost??Infinity));
+   const stdH=r=>r.only?`<span class="pill" title="Aucune recette de machine visible en 1.0 : seulement le chaudron (ou le raté d'une autre recette)">chaudron seul</span>`:`<b class="num">${r.std.steps}</b> <small class="en">étapes · ${r.std.mach} machines</small>`;
+   const buyH=r=>r.buyAv.length?`<span class="pl-buy">${r.buyAv.map(n=>esc(FR[IDX[n]])).join(", ")}</span>`:'<span class="en">—</span>';
+   const pick=(f,s)=>er.filter(f).sort(s)[0];
+   const e1=pick(r=>!r.only,(a,b)=>b.saved-a.saved||a.cost-b.cost),e2=pick(r=>!r.only&&r.profit!=null&&r.profit>0&&!r.inter,(a,b)=>b.saved-a.saved||b.profit-a.profit),e3=pick(r=>!r.only&&r.buyAv.length&&r.mpct>=10&&BASECOST[r.out]&&r.cost<=BASECOST[r.out][0],(a,b)=>b.buyAv.length-a.buyAv.length||b.saved-a.saved),e4=pick(r=>r.only,(a,b)=>b.mpct-a.mpct||a.cost-b.cost);
+   const ecard=(t,r,top)=>r?`<div class="card${top?" top":""}"><span class="k">${t}</span><div style="display:flex;align-items:center;gap:8px">${ico(r.out,"lg")}<b>${esc(frOf(r.out))}</b>${cauPill(r.mode)}</div>${recipeHTML(r.ids)}<div class="stats">${r.only?`<span>Aucune recette de machine en 1.0 : le chaudron est la seule source</span>`:`<span>Évite <b class="num">${r.saved}</b> étapes (${r.std.steps} → ${r.route})</span>`}<span>Marge ${mpill(r)}</span><span>Coût <b>${cu(r.cost)}</b></span><span>Coût de base <b>${cu((BASECOST[r.out]||[null])[0])}</b></span>${r.buyAv.length?`<span>Plus besoin de : ${r.buyAv.map(n=>esc(FR[IDX[n]])).join(", ")}</span>`:""}<span>${fmt(r.time)} s · ${r.perMin.toFixed(1)}/min</span></div><div class="acts">${starBtn(r)}${simBtn(r)}</div></div>`:card(false,t,null);
+   $("pl-ecards").innerHTML=ecard("Le plus gros raccourci",e1,true)+ecard("Le plus gros raccourci qui se vend avec bénéfice",e2)+ecard("Le plus d'achats évités, moins cher que la normale",e3)+ecard("Seulement au chaudron",e4);
+   $("pl-ecount").textContent=`${er.filter(r=>!r.only).length} produits obtenus plus simplement avec des plantes${er.some(r=>r.only)?` · ${er.filter(r=>r.only).length} seulement au chaudron (en bas)`:""}`;
+   $("pl-ebody").innerHTML=er.length?er.map(r=>`<tr><td>${ico(r.out,"md")}<b>${esc(frOf(r.out))}</b>${SELL[r.out]!=null?`<br><span class="en">vente ${fmt(SELL[r.out])} cu</span>`:""}</td><td>${cauPill(r.mode)}</td><td>${recipeHTML(r.ids)}</td><td class="r">${mpill(r)}</td><td class="r">${stdH(r)}</td><td class="r"><b class="num">${r.route}</b> <small class="en" title="${esc(["chaudron",...[...r.routeSet].map(n=>FR[IDX[n]])].join(" + "))}">étapes</small></td><td class="r">${r.only?'<span class="en">—</span>':`<b class="num pos">${r.saved}</b>`}</td><td>${buyH(r)}</td><td class="r">${cu(r.cost)}</td><td class="r">${cu(BASECOST[r.out]?BASECOST[r.out][0]:null)}</td><td class="r" title="Coût de base du jeu − coût des plantes">${money(BASECOST[r.out]&&r.cost!=null?BASECOST[r.out][0]-r.cost:null)}</td><td><span class="acts">${starBtn(r)}${simBtn(r)}</span></td></tr>`).join(""):`<tr><td colspan="12" class="empty">Rien avec ces filtres.</td></tr>`;
+   /* --- toutes les recettes --- */
+   const outs=[...new Set(out.map(r=>r.out))].sort((a,b)=>TARGETS[a]-TARGETS[b]),cur=$("pl-out").value||(store.get("wc-plant2",{})||{}).out||"";
+   $("pl-out").innerHTML=`<option value="">Tous les produits</option>`+outs.map(n=>`<option value="${esc(n)}">${esc(frOf(n))} — ${out.filter(r=>r.out===n).length}</option>`).join("");if(outs.includes(cur))$("pl-out").value=cur;
+   runAll();runTricks();window.PLANT_LAST={rows,er}}
+ function runAll(){const o=$("pl-out").value,L=ALL.filter(r=>!o||r.out===o).sort(sorts[$("pl-asort").value]);
+   $("pl-acount").textContent=`${L.length.toLocaleString("fr-CH")} recettes${o?" pour "+frOf(o):""}${L.length>300?" · 300 premières affichées":""}`;
+   $("pl-abody").innerHTML=L.length?L.slice(0,300).map(r=>`<tr><td>${ico(r.out,"md")}${esc(frOf(r.out))}</td><td>${cauPill(r.mode)}</td><td>${recipeHTML(r.ids)}</td><td class="r num">${fmt(r.s)}</td><td class="r">${mpill(r)}</td><td class="r">${cu(r.cost)}</td><td class="r">${cu(r.val)}</td><td class="r">${money(r.profitMin)}</td><td><span class="acts">${starBtn(r)}${simBtn(r)}</span></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Aucune recette.</td></tr>`}
+ $("p-plant").addEventListener("click",e=>{const b=e.target.closest("[data-plsim]");if(!b)return;const[m,...ns]=b.dataset.plsim.split("|");setMode(m);
+   SLOTS.forEach((id,k)=>{$(id).value=ns[k]!=null?FR[IDX[ns[k]]]:""});show("sim");runSim()});
+ const st=store.get("wc-plant2",null);if(st&&typeof st==="object"){const sv=(id,v,ok)=>{if(ok.includes(v))$(id).value=v};
+   sv("pl-mode",st.mode,["both","basic","adv"]);sv("pl-cost",st.cost,["base","grow"]);sv("pl-margin",st.margin,["0","5","10","20"]);sv("pl-sort",st.sort,["pmin","profit","ratio"]);sv("pl-asort",st.asort,["cost","margin","pmin"]);
+   if(typeof st.seed==="boolean")$("pl-seed").checked=st.seed;if(typeof st.der==="boolean")$("pl-der").checked=st.der;if(typeof st.inter==="boolean")$("pl-inter").checked=st.inter}
+ ["pl-mode","pl-cost","pl-fert","pl-margin","pl-sort","pl-seed","pl-der","pl-inter"].forEach(id=>$(id).addEventListener("change",()=>{if(id==="pl-fert"){const x=store.get("wc-plant2",{})||{};x.fert=$("pl-fert").value;store.set("wc-plant2",x)}runPlant()}));
+ ["pl-out","pl-asort"].forEach(id=>$(id).addEventListener("change",()=>{const x=store.get("wc-plant2",{})||{};x.out=$("pl-out").value;x.asort=$("pl-asort").value;store.set("wc-plant2",x);runAll()}));
+ /* ----- v23 : trucs malins ----- */
+ const RAWS=NAME.filter(n=>tagOf(n).includes("Matériaux bruts")&&!HIDDEN.has(n)&&CAT[IDX[n]]!=="liquid");
+ const ok2=r=>r&&r.out&&!r.def&&!r.ids.includes(IDX[r.out]);
+ const vsH=(r,d)=>d?money(r.profitMin-d.profitMin):'<span class="pill" title="Aucune recette aux plantes seules rentable pour ce produit et ce chaudron">nouveau</span>';
+ function runTricks(){const mode=$("pl-mode").value,minm=+$("pl-margin").value,inter=$("pl-inter").checked,fuelOn=SET.countFuel;
+   const inc=n=>(HERBS.includes(n)||($("pl-seed").checked&&SEEDS.includes(n))||($("pl-der").checked&&DER[n]))&&plantCost(n)!=null;
+   const PI=ORDER.filter(i=>inc(NAME[i])),RI=ORDER.filter(i=>RAWS.includes(NAME[i])&&COST[i]!=null);
+   const direct={};ALL.forEach(r=>{if(r.profit==null||r.profit<=0||r.mpct<minm||(r.inter&&!inter))return;const k=r.mode+"|"+r.out;if(!direct[k]||r.profitMin>direct[k].profitMin)direct[k]=r});
+   /* plante + 1 matière première */
+   const A={};const kA=r=>{if(!ok2(r))return;fix(r);if(r.profit==null||r.profit<=0||r.mpct<minm||(r.inter&&!inter))return;const k=r.mode+"|"+r.out;if(!A[k]||r.profitMin>A[k].profitMin)A[k]=r};
+   for(const x of RI)for(let a=0;a<PI.length;a++){if(mode!=="basic")kA(evalPair([PI[a],x]));if(mode!=="adv")for(let b=a;b<PI.length;b++)kA(evalTriple([PI[a],PI[b],x]))}
+   const ra=Object.values(A).sort(sorts[$("pl-sort").value]);
+   const better=ra.filter(r=>{const d=direct[r.mode+"|"+r.out];return!d||r.profitMin>d.profitMin+1e-9});
+   $("pl-rcards").innerHTML=better.length?better.slice(0,3).map((r,k)=>{const d=direct[r.mode+"|"+r.out];return card(k===0,k===0?"Le meilleur coup de pouce":k===1?"Deuxième":"Troisième",r,`<span>vs plantes seules <b>${d?money(r.profitMin-d.profitMin)+" /min":"nouveau produit"}</b></span>`)}).join(""):card(false,"Plante + 1 matière première",null);
+   $("pl-rcount").textContent=`${ra.length} produits rentables · ${better.length} font mieux qu'avec les plantes seules`;
+   $("pl-rbody").innerHTML=ra.length?ra.map(r=>`<tr><td>${ico(r.out,"md")}<b>${esc(frOf(r.out))}</b>${r.inter?' <span class="pill">intermédiaire</span>':""}</td><td>${cauPill(r.mode)}</td><td>${recipeHTML(r.ids)}</td><td class="r">${mpill(r)}</td><td class="r">${cu(r.cost)}</td><td class="r">${cu(r.val)}</td><td class="r">${money(r.profit)}</td><td class="r">${money(r.profitMin)}</td><td class="r">${vsH(r,direct[r.mode+"|"+r.out])}</td><td><span class="acts">${starBtn(r)}${simBtn(r)}</span></td></tr>`).join(""):`<tr><td colspan="10" class="empty">Rien avec ces filtres.</td></tr>`;
+   /* deux chaudrons : étage 1 = recette aux plantes la moins chère de chaque produit */
+   const S1={};ALL.forEach(r=>{if(r.cost==null||r.mpct<minm)return;if(!S1[r.out]||r.cost<S1[r.out].cost)S1[r.out]=r});
+   const XI2=Object.keys(S1).map(n=>IDX[n]).filter(i=>!PI.includes(i)),IN2=[...PI,...XI2].sort((a,b)=>VAL[a]-VAL[b]);
+   const c1=i=>S1[NAME[i]]&&!PI.includes(i)?S1[NAME[i]].cost+(fuelOn&&S1[NAME[i]].fuelCost?S1[NAME[i]].fuelCost:0):plantCost(NAME[i]);
+   const B={};const kB=r=>{if(!ok2(r)||!r.ids.some(i=>XI2.includes(i)))return;if(r.mpct<minm)return;const v=val(r.out);if(v==null||(SELL[r.out]==null&&!inter))return;
+     let c=0;for(const i of r.ids){const k=c1(i);if(k==null)return;c+=k}const fc=fuelOn&&r.fuelCost!=null?r.fuelCost:0;const profit=v-c-fc;if(profit<=0)return;
+     let n=1;const cnt={};r.ids.forEach(i=>{if(XI2.includes(i))cnt[i]=(cnt[i]||0)+1});Object.entries(cnt).forEach(([i,k])=>n+=k*r.perMin/S1[NAME[i]].perMin);
+     const o={r,cost:c,val:v,profit,pm:profit*r.perMin,n,per:profit*r.perMin/n,inter:SELL[r.out]==null,subs:Object.keys(cnt).map(i=>S1[NAME[i]])};
+     const k=r.mode+"|"+r.out;if(!B[k]||o.per>B[k].per)B[k]=o};
+   for(let a=0;a<IN2.length;a++)for(let b=a;b<IN2.length;b++){if(mode!=="basic")kB(evalPair([IN2[a],IN2[b]]));if(mode!=="adv")for(let c=b;c<IN2.length;c++)kB(evalTriple([IN2[a],IN2[b],IN2[c]]))}
+   const rb=Object.values(B).filter(o=>{const d=direct[o.r.mode+"|"+o.r.out];return!d||o.per>d.profitMin+1e-9}).sort((a,b)=>b.per-a.per);
+   $("pl-2count").textContent=`${rb.length} produits qui rapportent plus par chaudron qu'avec une seule recette aux plantes`;
+   const subH=x=>`<div class="pl-sub">${ico(x.out)}<b>${esc(frOf(x.out))}</b> ← ${recipeHTML(x.ids)} ${cauPill(x.mode)} ${mpill(x)} <span class="en">${cu(x.cost)}</span></div>`;
+   $("pl-2body").innerHTML=rb.length?rb.map(o=>{const r=o.r,d=direct[r.mode+"|"+r.out];return`<tr><td>${ico(r.out,"md")}<b>${esc(frOf(r.out))}</b>${o.inter?' <span class="pill">intermédiaire</span>':""}</td><td>${cauPill(r.mode)}</td><td>${recipeHTML(r.ids)}</td><td>${o.subs.map(subH).join("")}</td><td class="r">${mpill(r)}</td><td class="r">${cu(o.cost)}</td><td class="r">${cu(o.val)}</td><td class="r num">${fmt(o.n)}</td><td class="r">${money(o.pm)}</td><td class="r"><b>${money(o.per)}</b></td><td class="r">${d?money(o.per-d.profitMin):'<span class="pill">nouveau</span>'}</td><td><span class="acts">${starBtn(r)}${simBtn(r)}</span></td></tr>`}).join(""):`<tr><td colspan="12" class="empty">Rien avec ces filtres.</td></tr>`;
+   /* astuces */
+   const pickB=f=>ALL.filter(r=>r.mpct>=minm&&f(r)).sort(sorts.pmin)[0];
+   const gN=IDX["Gentian"],nN=IDX["Gentian Nectar"],gn=pickB(r=>{const a=r.ids.filter(i=>i===gN).length,b=r.ids.filter(i=>i===nN).length;return a>0&&a===b&&r.profit!=null});
+   const small=ra.filter(r=>r.mode==="adv").sort((a,b)=>b.mpct-a.mpct)[0],twin=pickB(r=>r.mode==="adv"&&r.ids[0]===r.ids[1]&&r.profit!=null&&r.profit>0);
+   const ex=r=>r?`<div style="margin-top:6px">${recipeHTML(r.ids)} → ${ico(r.out)}<b>${esc(frOf(r.out))}</b> ${cauPill(r.mode)} ${mpill(r)}</div>`:"";
+   const tip=(t,body,r)=>`<div class="card"><span class="k">${t}</span><p class="note" style="margin:0">${body}</p>${ex(r)}</div>`;
+   $("pl-tips").innerHTML=
+     tip("🎯 Un filtre par emplacement","Chaque emplacement du chaudron peut être réservé à un objet (filtre du bâtiment, lu dans le code : <code>SetFilterName(emplacement, objet)</code>). Un seul convoyeur mélangé suffit alors : chaque plante va dans sa case, plus de mélange raté. Les filtres sont gardés quand tu copies le chaudron dans un plan.")+
+     tip("🧺 Gentiane + nectar, zéro surplus","Une graine de gentiane donne 80 gentianes <b>et</b> 80 nectars. Une recette qui prend autant de gentiane que de nectar utilise toute la récolte, sans stock qui s'accumule.",gn)+
+     tip("🪵 Avancé : le petit ingrédient","Le chaudron avancé prend la <b>différence</b> des deux valeurs. Avec un objet presque gratuit et de valeur quasi nulle (bûche 0,8), la plante sort presque telle quelle vers la cible juste en dessous : marge énorme, recette impossible à rater.",small)+
+     tip("👯 Avancé : deux fois la même plante","Deux objets identiques au chaudron avancé donnent la première cible <b>au-dessus</b> de leur valeur. Une seule pépinière suffit pour remplir le chaudron.",twin)+
+     tip("🔫 Canon intelligent","Le chaudron accepte le canon intelligent (option du bâtiment, <code>AcceptSmartCannon</code>) : on peut lui envoyer les plantes à distance, sans convoyeur.")+
+     tip("⚠️ Marge fine = recette fragile",`La marge est l'écart avant que la somme bascule vers un autre produit. Sous 5 % (⚠), un futur patch qui change une valeur peut casser la recette ; la règle : ≥ 10 % pour une usine durable. Réglage actuel : ≥ ${minm} %.`);
+   window.PLANT_TRICKS={ra,rb,better}}
+ TABS.push("plant");dirty.plant=true;
+ const _showP=show;show=function(t){_showP(t);if(t==="plant"&&dirty.plant){runPlant();dirty.plant=false}};
+ const _mdP=markDirty;markDirty=function(){_mdP();dirty.plant=true};
+ window.runPlant=runPlant;window.PLANT_INFO={HERBS,SEEDS,DER,stdChain,plantCost,all:()=>ALL}}
 
 let startTab=store.get("wc-tab","discover");const h=(location.hash||"").slice(1);if(TABS.includes(h))startTab=h;
 $("s-out").value=startOut;$("s-outq").value=frOf(startOut);$("m-a").value=frOf(startSim[0]||"");$("m-b").value=frOf(startSim[1]||"");$("m-c").value=startSim[2]?frOf(startSim[2]):"";
