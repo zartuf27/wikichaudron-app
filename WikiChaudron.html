@@ -111,6 +111,12 @@ input.cost{width:110px;text-align:right;font-family:var(--f-mono)}
 .subnav{display:flex;justify-content:flex-start}.subnav:not(:has(.seg:not([hidden]))){display:none}.subnav .seg button[aria-selected="true"]{background:var(--accent);color:var(--bg)}
 .game-chip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;font-size:.85rem}.game-chip .gc{color:var(--muted)}
 .sh-best{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 4px;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}.sh-best .k{width:100%;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.gf-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.gf-step{display:flex;flex-direction:column;gap:6px}.gf-step>b{font-size:.9rem}
+.gf-step.wide{grid-column:span 2}@media (max-width:760px){.gf-step.wide{grid-column:auto}}.gf-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.gf-chips .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gf-col{align-self:flex-start}.gf-chips .chip{display:inline-flex;align-items:center;gap:4px;font-size:.8rem}.gf-chips .chip[aria-pressed="false"]{opacity:.45}
+.gf-card{cursor:pointer}.gf-flow{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;align-items:stretch}.gf-col{flex:0 0 220px;display:flex;flex-direction:column;gap:6px}.gf-col h4{margin:0;font-size:.85rem}
+.gf-ck{display:flex;align-items:center;gap:6px;cursor:pointer}.gf-harv{display:flex;flex-direction:column;gap:4px}
+@media (max-width:600px){.gf-flow{flex-direction:column}.gf-col{flex:none}.gf-arrow{transform:rotate(90deg)}}
+.gf-arrow{align-self:center;color:var(--muted);font-size:1.3rem}.gf-node{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--bg);font-size:.82rem}.gf-node.top{border-color:var(--accent)}.gf-node.sur{border-style:dashed}.gf-in{color:var(--muted);margin-top:4px;font-size:.78rem}
 .hopts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.hopts .chk{font-size:.85rem}#fav-btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .pill.adv{border-color:var(--brass);color:var(--brass)}
 .slots{display:flex;flex-direction:column;gap:8px}
@@ -302,7 +308,7 @@ text.wk-rate{font:600 11px var(--f-mono);fill:var(--ink);text-anchor:middle;poin
 </nav>
 <div class="subnav" id="subnav">
   <div class="seg" data-sub="recipes" role="tablist" aria-label="Recettes" hidden><button type="button" role="tab" data-tab="search">Je veux fabriquer…</button><button type="button" role="tab" data-tab="use">J'ai en stock…</button></div>
-  <div class="seg" data-sub="usine" role="tablist" aria-label="Usine" hidden><button type="button" role="tab" data-tab="atelier">Atelier</button><button type="button" role="tab" data-tab="plan">Planificateur rapide</button></div>
+  <div class="seg" data-sub="usine" role="tablist" aria-label="Usine" hidden><button type="button" role="tab" data-tab="atelier">Atelier</button><button type="button" role="tab" data-tab="plan">Planificateur rapide</button><button type="button" role="tab" data-tab="green">🌿 Usines vertes</button></div>
   <div class="seg" data-sub="data" role="tablist" aria-label="Données" hidden><button type="button" role="tab" data-tab="wiki">Valeurs et coûts</button><button type="button" role="tab" data-tab="book">Recettes du jeu</button><button type="button" role="tab" data-tab="rules">Règles</button></div>
 </div>
 
@@ -324,13 +330,14 @@ text.wk-rate{font:600 11px var(--f-mono);fill:var(--ink);text-anchor:middle;poin
   <div class="panel controls">
     <label class="f">Produit voulu<input type="text" id="s-outq" list="dl-out" placeholder="Tape un nom (ex. Topaze)" autocomplete="off"><select id="s-out" style="margin-top:4px"></select></label>
     <label class="f">Doublons<select id="s-dup"><option value="any">Autorisés</option><option value="uniq">Objets tous différents</option></select></label>
-    <label class="f">Doit contenir<input type="text" id="s-inc" list="dl-items" placeholder="Peu importe" autocomplete="off"></label>
+    <label class="f" title="Le produit doit utiliser cet ingrédient : l'app complète le reste">Avec l'ingrédient<input type="text" id="s-inc" list="dl-items" placeholder="Peu importe" autocomplete="off"></label>
     <label class="f">Exclure<input type="text" id="s-exc" list="dl-items" placeholder="Rien" autocomplete="off"></label>
     <label class="f">Trier par<select id="s-sort"><option value="cost">Coût le plus bas</option><option value="profit">Bénéfice à la vente</option><option value="resale">Gain vs revente des ingrédients</option><option value="margin">Recette la plus stable</option><option value="simple">Moins d'ingrédients différents</option></select></label>
     <label class="chk"><input type="checkbox" id="s-known" checked> Seulement les recettes au coût connu</label>
     <label class="chk"><input type="checkbox" id="s-safe"> Marge sûre seulement</label>
     <div class="chips" id="s-cats" aria-label="Catégories d'ingrédients autorisées"></div>
   </div>
+  <div id="s-all" class="panel"></div>
   <div id="s-cards" class="cards"></div>
   <div class="row"><h3 id="s-count"></h3><span class="note">Coûts hors combustible du chaudron.</span></div>
   <div class="tbl"><table><thead><tr><th>Recette</th><th class="r">Somme</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Bénéfice</th><th class="r">vs revente</th><th></th></tr></thead><tbody id="s-body"></tbody></table></div>
@@ -361,6 +368,18 @@ text.wk-rate{font:600 11px var(--f-mono);fill:var(--ink);text-anchor:middle;poin
     </div>
     <div class="panel result" id="m-res"></div>
   </div>
+</section>
+
+<section id="p-green" class="wrap" style="gap:16px" hidden>
+  <div class="panel controls gf-steps">
+    <div class="gf-step"><b>① Produit et cadence</b><label class="f">Produit<select id="gf-prod"><option value="">Tous (galerie)</option></select></label><label class="f">Cadence / min<input type="number" id="gf-rate" min="0" step="any" placeholder="1 chaudron final"></label></div>
+    <div class="gf-step wide"><b>② Plantes que tu cultives</b><div id="gf-herbs" class="gf-chips"></div></div>
+    <div class="gf-step"><b>③ Bâtiments</b><label class="chk"><input type="checkbox" id="gf-basic" checked> Chaudron de base</label><label class="chk"><input type="checkbox" id="gf-adv" checked> Chaudron avancé</label><label class="chk"><input type="checkbox" id="gf-pdx" checked> Creuset de paradoxe</label></div>
+    <div class="gf-step"><b>④ Achats et marge</b><label class="chk" title="Bûche, calcaire, minerais, bûche pourrie, sel gemme, quartz, météorite"><input type="checkbox" id="gf-raw"> Autoriser les matières premières</label><label class="f">Marge minimale<select id="gf-margin"><option value="0">toutes</option><option value="5" selected>≥ 5 %</option><option value="10">≥ 10 %</option><option value="20">≥ 20 %</option></select></label><label class="f" title="La meilleure : pour chaque produit, le plan qui rapporte le plus par bâtiment. La moins chère : la recette au meilleur coût, quel que soit l'étage. Plantes d'abord : comme la chaîne plantes de l'Atelier (plantes et dérivés, puis chaudrons à la suite)">Recettes<select id="gf-plan"><option value="best" selected>la meilleure par bâtiment</option><option value="cheap">la moins chère</option><option value="plants">plantes d'abord</option></select></label></div>
+  </div>
+  <div id="gf-detail" class="panel" hidden></div>
+  <div class="row"><h3 id="gf-count"></h3><label class="f">Classer par<select id="gf-sort"><option value="per">Bénéfice / min par bâtiment</option><option value="profit">Bénéfice / min</option><option value="bld">Le moins de bâtiments</option></select></label><label class="f">Taille<select id="gf-size"><option value="10">≤ 10 bâtiments</option><option value="30" selected>≤ 30 bâtiments</option><option value="100">≤ 100 bâtiments</option><option value="0">toutes</option></select></label><label class="chk"><input type="checkbox" id="gf-sell" checked> vendables</label><label class="chk" title="Produits non vendables, comptés à leur coût de base"><input type="checkbox" id="gf-inter"> intermédiaires</label><label class="chk"><input type="checkbox" id="gf-zero"> zéro surplus</label></div>
+  <div id="gf-cards" class="cards"></div>
 </section>
 
 <section id="p-plan" class="wrap" style="gap:16px" hidden>
@@ -723,6 +742,7 @@ function runSearch(){clearTimeout(sTimer);sTimer=setTimeout(()=>{
   const cheapest=byCost.find(r=>r.mpct>=5)||byCost[0];
   const stableCheap=byCost.find(r=>r!==cheapest&&r.mpct>=safeM&&r.mpct>0);
   const resaleBest=[...res].filter(r=>r.gainResale!=null).sort(sorters.resale)[0];
+  $("s-all").innerHTML=window.searchAll?searchAll(out,o):"";
   $("s-cards").innerHTML=card(true,cheapest&&cheapest.mpct>=5?"Top recette · meilleur prix (marge ≥ 5 %)":"Top recette · meilleur prix",cheapest)+(cheapest&&cheapest.mpct>=safeM&&!stableCheap?`<div class="card"><span class="k">Marge sûre (≥ ${safeM} %)</span><span class="note">La recette n°1 a déjà une marge sûre.</span></div>`:card(false,`Meilleur prix avec marge sûre (≥ ${safeM} %)`,stableCheap))+
     (resaleBest?card(false,"Meilleur gain vs revendre les ingrédients",resaleBest,`<span>vs revente <b>${money(resaleBest.gainResale)}</b></span>`):card(false,"Gain vs revente",null));
   res.sort(sorters[$("s-sort").value]);
@@ -1039,7 +1059,7 @@ const LOGI={
   cata:{fr:"Catapulte",ico:"logi-cata",ins:1,outs:1,desc:"Lance les objets vers une machine (un chaudron par exemple)."},
   canon:{fr:"Canon",ico:"logi-canon",ins:1,outs:1,desc:"Lance les objets plus loin et plus vite qu'une catapulte."}};
 const isLogi=n=>!!LOGI[n.kind];
-const KCOL={rec:"--accent",cau:"--c-magic",src:"--c-raw",sale:"--c-money",split:"--brass",prio:"--brass",merge:"--brass",store:"--c-craft",cata:"--c-relic",canon:"--c-relic"};
+const KCOL={rec:"--accent",cau:"--c-magic",pdx:"--c-magic",src:"--c-raw",sale:"--c-money",split:"--brass",prio:"--brass",merge:"--brass",store:"--c-craft",cata:"--c-relic",canon:"--c-relic"};
 let WP=null,WSEL=new Set(),WSELL=null,WLINK=null,WUNDO=[],WREDO=[],WCLIP=null,WVIEW={x:40,y:40,z:1},WSNAP=false,WRES=null,WSIDE="sel";
 let WDB=store.get("wc-ateliers",null);
 if(!WDB||typeof WDB!=="object"||!WDB.projects||typeof WDB.projects!=="object")WDB={current:"Mon usine",projects:{"Mon usine":{nodes:[],links:[],seq:1}}};
@@ -1065,6 +1085,7 @@ function wkPorts(n){
   if(n.kind==="rec"){const o=RECIPES.find(r=>r.id===n.rec);if(!o)return{ins:[],outs:[],T:null};return{ins:o.ings.map(([i,q])=>({item:i,q})),outs:[{item:o.out[0],q:o.out[1]}],T:o.time,o,p:o.p??1,byp:[...o.fails.map(([i,q,r])=>[i,q*r,"raté"]),...(o.side?[[o.side[0],o.side[1],"sous-produit"]]:[])]}}
   if(n.kind==="cau"){const ids=(n.ids||[]).map(x=>IDX[x]).filter(i=>i!=null);const r=ids.length>=2?evalCombo(ids):null;const c={};ids.forEach(i=>c[NAME[i]]=(c[NAME[i]]||0)+1);
     return{ins:Object.entries(c).map(([item,q])=>({item,q})),outs:r&&r.out?[{item:r.out,q:1}]:[],T:r&&r.out?craftTime(TARGETS[r.out]):null,r}}
+  if(n.kind==="pdx")return{ins:[{item:n.from,q:1}],outs:[{item:GF_ESS,q:1}],T:pdxTime(n.from)};
   if(n.kind==="src")return{ins:[],outs:[{item:n.item,q:1}],T:null};
   if(n.kind==="sale")return{ins:[{item:n.item,q:1}],outs:[],T:null};
   return{ins:[],outs:[],T:null}}
@@ -1090,7 +1111,8 @@ function wkSolve(){const k=SET.speed/100,P={},O={},R={};WP.nodes.forEach(n=>{P[n
   WP.nodes.forEach(n=>{const p=P[n.id],r=R[n.id]||0,o={runs:r,ins:{},outs:{},pin:{},pout:{},m:null,bad:[],note:[]};
     uniqIns(p).forEach(([item,q])=>{o.ins[item]=r*q;const ls=sup[n.id+"|"+item]||[];if(!ls.length&&r>0){if(p.logi)o.bad.push("entrée");else{res.ext[item]=(res.ext[item]||0)+r*q;o.bad.push(item)}}});
     p.outs.forEach(({item,q})=>{if(item!=null)o.outs[item]=n.kind==="src"||p.logi?O[n.id]:(O[n.id]+(+n.target||0))});
-    if((n.kind==="rec"||n.kind==="cau")&&p.T){const mm=n.kind==="rec"?machMult(p.o.t,n.model):1;o.m=r*(p.T/k)/60/mm;const key=n.kind==="cau"?(n.mode==="adv"?"adv":"22"):p.o.t+"|"+mvIdx(p.o.t,n.model);res.machines[key]=(res.machines[key]||0)+Math.ceil(o.m-1e-9)}
+    if(n.kind==="pdx"||(n.kind==="rec"&&p.o&&p.o.t===21)){res.fuelP+=r*GF_PXHEAT*p.T/(SET.fuelEff/100)}
+    if((n.kind==="rec"||n.kind==="cau"||n.kind==="pdx")&&p.T){const mm=n.kind==="rec"?machMult(p.o.t,n.model):1;o.m=r*(p.T/k)/60/mm;const key=n.kind==="cau"?(n.mode==="adv"?"adv":"22"):n.kind==="pdx"?"21":p.o.t+"|"+mvIdx(p.o.t,n.model);res.machines[key]=(res.machines[key]||0)+Math.ceil(o.m-1e-9)}
     if(p.byp&&p.byp.length){o.byp=p.byp.map(([i,q,w])=>[i,r*q,w]).filter(x=>x[1]>0);o.byp.forEach(([i,v])=>res.byp[i]=(res.byp[i]||0)+v)}
     if(n.obs!=null&&n.kind==="src"){o.obs=+n.obs;if(r>o.obs*1.03+0.01)o.note.push(`Ta partie a acheté ${fmt(o.obs)} / min de cet objet ; la chaîne en utilise ${fmt(r)} / min : le reste vient de ton stock ou d'une autre source.`)}
     else if(n.obs!=null){const outv=O[n.id]+(+n.target||0);o.obs=+n.obs;if(outv>o.obs*1.03+0.01){o.bad.push("goulot");o.note.push(`Goulot : ta partie produit ${fmt(o.obs)} / min, la chaîne en demande ${fmt(outv)} / min.`)}else if((+n.target||0)>0.01)o.note.push(`Surplus : ${fmt(+n.target)} / min ne sont pas consommés par la chaîne (vendus, livrés ou stockés).`)}
@@ -1105,7 +1127,8 @@ function wkSolve(){const k=SET.speed/100,P={},O={},R={};WP.nodes.forEach(n=>{P[n
   WP.nodes.forEach(n=>{if(n.kind!=="split")return;const fl=WP.links.map((l,ix)=>l.from===n.id?flow[ix]:null).filter(x=>x!=null);
     if(fl.length>1&&Math.max(...fl)-Math.min(...fl)>.01*Math.max(...fl)){res.nodes[n.id].note.push(`Sorties inégales (${fl.map(fmt).join(" / ")} par min) : un diviseur équilibré donne la même part à chaque sortie. Utilise un diviseur prioritaire.`);res.nodes[n.id].bad.push("equilibre")}});
   res.reused=USED;for(const i in USED)if(res.byp[i]!=null)res.byp[i]=Math.max(0,res.byp[i]-USED[i]);
-  for(const [i,v] of Object.entries(res.srcs))res.cost+=v*(COST[IDX[i]]||0);
+  const PIc=window.PLANT_INFO,srcU=i=>PIc&&(PIc.HERBS.includes(i)||PIc.SEEDS.includes(i))?(PIc.plantCost(i)??COST[IDX[i]]??0):(COST[IDX[i]]||0);
+  for(const [i,v] of Object.entries(res.srcs))res.cost+=v*srcU(i);
   for(const [i,v] of Object.entries(res.ext))res.cost+=v*(COST[IDX[i]]||0);
   for(const [i,v] of Object.entries(res.sales))res.revenue+=v*(SELL[i]!=null?SELL[i]:0);
   res.fuelCost=FUEL?res.fuelP*FUEL.ppp:null;res.profit=res.revenue-res.cost-(SET.countFuel&&res.fuelCost!=null?res.fuelCost:0);
@@ -1117,6 +1140,7 @@ function wkPortXY(n,side,ix){return{x:n.x+(side==="in"?0:WK.W),y:n.y+WK.HEAD+ix*
 function wkTitle(n){if(isLogi(n))return[n.item||null,`<img class="wk-mi" src="${iconURL(LOGI[n.kind].ico)}" alt="">`,LOGI[n.kind].fr];
   if(n.kind==="rec"){const o=RECIPES.find(r=>r.id===n.rec);return o?[o.out[0],mIco(o.t,"wk-mi"),machLabel(o.t,n.model)+(o.p<1?` · ${Math.round(o.p*100)} % réussite`:"")+(isLocked(o.id)?" · 🔒":"")]:["?","",""]}
   if(n.kind==="cau"){const p=wkPorts(n);return[p.outs[0]?p.outs[0].item:null,mIco(n.mode==="adv"?"adv":22,"wk-mi"),n.mode==="adv"?"Chaudron avancé":"Chaudron"]}
+  if(n.kind==="pdx")return[GF_ESS,mIco(21,"wk-mi"),"Creuset de paradoxe"];
   if(n.kind==="src")return[n.item,ico(n.item,"wk-mi"),"Source : achat ou récolte"];return[n.item,ico(n.item,"wk-mi"),"Vente en boutique"]}
 const WKRM=typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function wkRender(){const res=WRES=wkSolve(),world=$("wk-world");if(!world)return;
@@ -1128,7 +1152,7 @@ function wkRender(){const res=WRES=wkSolve(),world=$("wk-world");if(!world)retur
       body+=`<div class="wk-row">${a?`<span class="wk-port in${miss?" miss":""}${WLINK&&(WLINK.item===a.item||(lg&&!n.item))?" can":""}" style="--pc:var(${catVar(a.item)})" data-port="in" data-node="${n.id}" data-pi="${i}" data-pitem="${esc(a.item||"")}" title="${esc(frn(a.item))} : ${fmt(fa)} / min${miss?" (non relié : acheté hors de l'usine)":""}"></span><span class="wk-lab" title="${esc(frn(a.item))}">${a.item?ico(a.item):""}<span class="wk-n">${lg?(p.ins.length>1?"entrée "+(i+1):"entrée"):esc(frn(a.item))}</span> <b class="num">${fmt(fa)}</b></span>`:"<span></span>"}
       ${b?`<span class="wk-lab r" title="${esc(frn(b.item))}"><b class="num">${fmt(fb)}</b> <span class="wk-n">${lg?(p.outs.length>1?"sortie "+(i+1):"sortie"):esc(frn(b.item))}</span>${b.item?ico(b.item):""}</span><span class="wk-port out${WLINK&&WLINK.from===n.id&&WLINK.fp===i?" act":""}" style="--pc:var(${catVar(b.item)})" data-port="out" data-node="${n.id}" data-pi="${i}" data-pitem="${esc(b.item||"")}" title="Relier ${esc(frn(b.item))}"></span>`:""}</div>`}
     let badge="",foot="";
-    if(n.kind==="rec"||n.kind==="cau"){if(o.m!=null){badge=`<span class="wk-cnt"><b>${Math.ceil(o.m-1e-9)}</b><small>×${fmt(o.m)}</small></span>`;const u=o.m>0?o.m/Math.ceil(o.m-1e-9):0;foot=`<div class="wk-bar"><i style="width:${Math.round(u*100)}%"></i></div><span class="en">${fmt(o.runs)} fabrications / min · charge ${Math.round(u*100)} %</span>${o.byp&&o.byp.length?`<span class="en">+ ${o.byp.map(([i,v,w])=>fmt(v)+" "+esc(frn(i))+" ("+w+")").join(" · ")}</span>`:""}${o.obs!=null?`<span class="${o.bad.includes("goulot")?"neg":"en"}">observé ${fmt(o.obs)} / min</span>`:""}`}else foot='<span class="neg">recette invalide</span>'}
+    if(n.kind==="rec"||n.kind==="cau"||n.kind==="pdx"){if(o.m!=null){badge=`<span class="wk-cnt"><b>${Math.ceil(o.m-1e-9)}</b><small>×${fmt(o.m)}</small></span>`;const u=o.m>0?o.m/Math.ceil(o.m-1e-9):0;foot=`<div class="wk-bar"><i style="width:${Math.round(u*100)}%"></i></div><span class="en">${fmt(o.runs)} fabrications / min · charge ${Math.round(u*100)} %</span>${o.byp&&o.byp.length?`<span class="en">+ ${o.byp.map(([i,v,w])=>fmt(v)+" "+esc(frn(i))+" ("+w+")").join(" · ")}</span>`:""}${o.obs!=null?`<span class="${o.bad.includes("goulot")?"neg":"en"}">observé ${fmt(o.obs)} / min</span>`:""}`}else foot='<span class="neg">recette invalide</span>'}
     else if(n.kind==="src"&&n.obs!=null){foot=`<span class="en">${fmt(o.runs)} / min utilisés · achats observés ${fmt(+n.obs)} / min</span>`}
     else if(n.kind==="src"){const mx=+n.max||0,u=mx?Math.min(1.5,o.runs/mx):0;foot=mx?`<div class="wk-bar${o.runs>mx?" over":""}"><i style="width:${Math.min(100,Math.round(u*100))}%"></i></div><span class="en">${fmt(o.runs)} / ${fmt(mx)} par min</span>`:`<span class="en">${fmt(o.runs)} / min · sans limite</span>`}
     else if(n.kind==="sale"){foot=`<span class="en">objectif</span> <b class="num">${fmt(+n.target||0)} / min</b>${SELL[n.item]!=null?` <span class="en">· ${fmt((+n.target||0)*SELL[n.item])} cu / min</span>`:""}`}
@@ -1163,7 +1187,7 @@ function wkSummary(res){const ch=(i,v)=>`<tr><td>${ingChips([[i,1]])}</td><td cl
   const byp=Object.entries(res.byp||{}).filter(x=>x[1]>1e-9).map(([i,v])=>`<span class="wk-chip">${ico(i)}${esc(frn(i))} <b>${fmt(v)}/min</b></span>`).join("");
   const logi=Object.entries(res.logi).map(([k,c])=>`<span class="wk-chip"><img class="ico" src="${iconURL(LOGI[k].ico)}" alt="">${esc(LOGI[k].fr)} <b>×${c}</b></span>`).join("")+
     `<span class="wk-chip"><img class="ico" src="${iconURL("logi-belt")}" alt="">Convoyeurs (tronçons) <b>×${res.belts}</b></span>${res.pipes?`<span class="wk-chip"><img class="ico" src="${iconURL("logi-pipe")}" alt="">Tuyaux <b>×${res.pipes}</b></span>`:""}`;
-  $("wk-sum").innerHTML=`<div class="kv"><div><span>Ventes</span><b>${cu(res.revenue)}</b><small class="en">par minute (prix de base)</small></div><div><span>Achats</span><b>${cu(res.cost)}</b><small class="en">par minute</small></div><div><span>Combustible</span><b>${res.fuelCost!=null?cu(res.fuelCost):"?"}</b><small class="en">${fmt(res.fuelP)} P / min · chaudrons${SET.countFuel?"":" · non déduit"}</small></div><div><span>Bénéfice</span><b>${money(res.profit)}</b><small class="en">par minute</small></div></div>
+  $("wk-sum").innerHTML=`<div class="kv"><div><span>Ventes</span><b>${cu(res.revenue)}</b><small class="en">par minute (prix de base)</small></div><div><span>Plantes et achats</span><b>${cu(res.cost)}</b><small class="en">par minute · plantes au coût de culture</small></div><div><span>Combustible</span><b>${res.fuelCost!=null?cu(res.fuelCost):"?"}</b><small class="en">${fmt(res.fuelP)} P / min · chaudrons${SET.countFuel?"":" · non déduit"}</small></div><div><span>Bénéfice</span><b>${money(res.profit)}</b><small class="en">par minute</small></div></div>
   ${mach?`<h3>Machines à construire</h3><div class="wk-chips">${mach}</div>`:""}
   ${reu?`<h3>Ratés et sous-produits réutilisés</h3><p class="note">Ils remplacent autant de production chez leurs fournisseurs : renvoie-les par convoyeur vers la machine qui en a besoin.</p><div class="wk-chips">${reu}</div>`:""}${byp?`<h3>Sous-produits en surplus (ratés de l'athanor, produits secondaires)</h3><div class="wk-chips">${byp}</div>`:""}
   <h3>Logistique</h3><div class="wk-chips">${logi}</div>
@@ -1177,7 +1201,7 @@ function wkPanel(){const el=$("wk-panel");[...WSEL].forEach(id=>{if(!wkNode(id))
     <p class="note">Insérer sur ce lien :</p><div class="acts">${["store","cata","canon","split","prio"].map(k=>`<button class="btn ghost sm" data-wk="ins:${k}"><img class="ico" src="${iconURL(LOGI[k].ico)}" alt="">${LOGI[k].fr}</button>`).join("")}</div>
     <div class="acts"><button class="btn ghost sm" data-wk="dellink">Supprimer le lien</button></div>`;return}
   if(WSEL.size!==1){el.innerHTML=WSEL.size>1?`<h3>${WSEL.size} nœuds sélectionnés</h3><div class="acts"><button class="btn sm" data-wk="dup">Dupliquer</button><button class="btn ghost sm" data-wk="del">Supprimer</button></div>`:
-    `<p class="note">Clique un nœud ou un lien pour le régler (aide et raccourcis : bouton ? du canevas).</p><div class="wk-legend">${Object.entries({rec:"Machine",cau:"Chaudron",src:"Source",sale:"Vente",split:"Logistique"}).map(([k,v])=>`<span style="--kc:var(${KCOL[k]})">${v}</span>`).join("")}</div>`;return}
+    `<p class="note">Clique un nœud ou un lien pour le régler (aide et raccourcis : bouton ? du canevas).</p><div class="wk-legend">${Object.entries({rec:"Machine",cau:"Chaudron",pdx:"Creuset de paradoxe",src:"Source",sale:"Vente",split:"Logistique"}).map(([k,v])=>`<span style="--kc:var(${KCOL[k]})">${v}</span>`).join("")}</div>`;return}
   const n=wkNode([...WSEL][0]);if(!n){el.innerHTML="";return}const o=(WRES.nodes||{})[n.id]||{};const item=wkTitle(n)[0];let form="";
   if(isLogi(n)){const L=LOGI[n.kind];form=`<p class="note">${esc(L.desc)}</p><label class="f">Objet transporté<input type="text" id="wk-litem" list="dl-items" value="${esc(n.item?frn(n.item):"")}" placeholder="Fixé par le premier lien"></label>`;
     if(o.cap)form+=`<p class="note">Capacité : ${fmt(o.cap)} objets / min par ${n.kind==="cata"?"catapulte":"canon"} (réglages : lancer).</p>`}
@@ -1190,6 +1214,7 @@ function wkPanel(){const el=$("wk-panel");[...WSEL].forEach(id=>{if(!wkNode(id))
     if(o&&o.p<1)form+=`<p class="note">Réussite ${Math.round(o.p*100)} %${o.cats&&o.cats.length?" (avec catalyseurs)":" (sans catalyseur)"} : il faut ${fmt(1/o.p)} fabrications par produit réussi. Les ratés donnent ${o.fails.map(([i,q,r])=>`${q} ${esc(frn(i))} (${Math.round(r*100)} %)`).join(" et ")}.${o.catCost?` Dans l'athanor avancé, un catalyseur coûte ${o.catCost} charges par fabrication : instable (réussite ${Math.round(((V14.rx[o.id]||{}).pc||[1])[0]*100)} %), sonore (produit et ratés à chaque fois), fertile (sorties × 2), éternel (ingrédients gratuits). À cocher dans Réglages.`:""}</p>`}
   if(n.kind==="cau"){const ids=(n.ids||[]);form+=`<div class="f"><span>Ingrédients du chaudron</span>${[0,1,2].slice(0,n.mode==="adv"?2:3).map(k=>`<input type="text" class="wk-ing" data-k="${k}" list="dl-items" value="${esc(ids[k]?FR[IDX[ids[k]]]:"")}" placeholder="Ingrédient ${k+1}">`).join("")}</div>`;
     const p=wkPorts(n);if(p.r)form+=`<p class="note">Résultat : <b>${p.r.out?esc(FR[IDX[p.r.out]]):"aucun"}</b> · marge ${mpill(p.r)}</p>`}
+  if(n.kind==="pdx")form+=`<label class="f">Objet envoyé au creuset<input type="text" id="wk-pfrom" list="dl-items" value="${esc(FR[IDX[n.from]]||"")}"></label><p class="note">${fmt(pdxTime(n.from))} s par objet (1500 ÷ valeur, 5 s pour une essence) ; 1 objet donne 1 essence d'oubli ; 1200 P/s de chauffe.</p>`;
   if(n.kind==="sale"||n.kind==="rec"||n.kind==="cau")form+=`<label class="f">${n.kind==="sale"?"Objectif de vente (par minute)":"Objectif supplémentaire en sortie (par minute)"}<input type="number" id="wk-target" min="0" step="any" value="${+n.target||0}"></label>`;
   if(n.kind==="src")form+=`<label class="f">Limite de la source (par minute, 0 = sans limite)<input type="number" id="wk-max" min="0" step="any" value="${+n.max||0}"></label>`;
   const bad=(o.bad||[]).filter(b=>b!=="equilibre"&&b!=="goulot").map(b=>b==="max"?"Demande supérieure à la limite de la source.":b==="nonvendable"?"Cet objet n'est pas vendable en boutique.":b==="produit"?"Cette recette ne produit rien.":b==="entrée"?"Entrée non reliée.":`${esc(frn(b))} n'est pas relié.`).concat((o.note||[]).map(esc));
@@ -1219,23 +1244,12 @@ function wkBuild(item,rate,asSale,DEF){DEF=DEF||wkDefault;wkSnap();const b=wkBou
   WSEL=new Set([top.id]);WSELL=null;wkRender();wkFit();wkSave();toast(`${WP.nodes.length-before} nœuds créés pour ${FR[IDX[item]]}`)}
 /* --- v24 : chaîne intelligente à base de plantes --- */
 /* étages : herbes → + dérivés → + produits du chaudron déjà faits aux plantes → + graines achetées ; un produit garde son premier étage */
-function wkPlantPlan(minm){const PI=window.PLANT_INFO;PI.reset();const pick={},avail=new Map(),done=new Set();
-  const add=(n,c)=>{if(c!=null&&IDX[n]!=null&&!HIDDEN.has(n)&&CAT[IDX[n]]!=="liquid")avail.set(IDX[n],c)};
-  const stage=lab=>{const IN=[...avail.keys()].sort((a,b)=>VAL[a]-VAL[b]),best={};
-    const keep=r=>{if(!r||!r.out||r.def||pick[r.out]||HIDDEN.has(r.out)||r.ids.includes(IDX[r.out])||r.mpct<minm)return;let c=0;for(const i of r.ids)c+=avail.get(i);
-      const b=best[r.out];if(!b||c<b.cost-1e-9||(Math.abs(c-b.cost)<=1e-9&&r.mpct>b.mpct))best[r.out]={mode:r.ids.length===2?"adv":"basic",ids:r.ids.map(i=>NAME[i]),cost:c,mpct:r.mpct,stage:lab}};
-    const pre=ids=>{const o=TL[resolve((VAL[ids[0]]+VAL[ids[1]]+VAL[ids[2]])*mult(ids))].n;return!pick[o]&&!HIDDEN.has(o)&&!ids.includes(IDX[o])};
-    for(let a=0;a<IN.length;a++){const oa=done.has(IN[a]);for(let b=a;b<IN.length;b++){const ob=oa&&done.has(IN[b]);if(!ob)keep(evalPair([IN[a],IN[b]]));
-      for(let c=b;c<IN.length;c++){if(ob&&done.has(IN[c]))continue;const ids=[IN[a],IN[b],IN[c]];if(pre(ids))keep(evalTriple(ids))}}}
-    IN.forEach(i=>done.add(i));Object.assign(pick,best);return Object.keys(best).length};
-  const chain=lab=>{for(let k=0;k<8;k++){Object.entries(pick).forEach(([n,p])=>{if(!avail.has(IDX[n]))add(n,p.cost)});if(!stage(lab))break}};
-  PI.HERBS.forEach(n=>add(n,PI.plantCost(n)));Object.keys(PI.DER).forEach(n=>{if(isUnl(PI.DER[n].id))add(n,PI.plantCost(n))});stage(0);
-  chain(2);
-  PI.SEEDS.forEach(n=>add(n,PI.plantCost(n)));stage(3);chain(3);
-  return pick}
+function wkPlantPlan(minm){return gfPlan(minm,{})}
 let WK_PLAN={};
 function wkPlantDef(item,path){const PI=window.PLANT_INFO;
   if(PI.HERBS.includes(item)||PI.SEEDS.includes(item))return{kind:"src",item,max:0};
+  if(WK_GFO.raw&&GF_RAWS.has(item))return{kind:"src",item,max:0};
+  if(!WK_PLAN[item]&&WK_PLAN.$ess){if(item===GF_ESS)return{kind:"pdx",from:WK_PLAN.$ess.src};if(item===GF_VIT&&RECIPES.some(r=>r.id==="Vitae"))return{kind:"rec",rec:"Vitae"}}
   const p=WK_PLAN[item];if(p&&!p.ids.some(n=>path.has(n)))return{kind:"cau",mode:p.mode,ids:p.ids.slice()};
   const d=PI.DER[item];if(d&&isUnl(d.id)&&!d.ings.some(([i])=>path.has(i)))return{kind:"rec",rec:d.id};
   /* machine : la recette avec le moins d'entrées hors plantes, puis standard, puis la moins chère */
@@ -1244,8 +1258,8 @@ function wkPlantDef(item,path){const PI=window.PLANT_INFO;
     .sort((a,b)=>a.k-b.k||a.o.alt-b.o.alt||(a.c??Infinity)-(b.c??Infinity));
   if(R.length&&R[0].k<R[0].o.ings.length)return{kind:"rec",rec:R[0].o.id};
   return wkDefault(item,path)}
-const WK_STAGE=["plantes et dérivés","","chaudrons à la suite","graines achetées"];
-function wkPlantBuild(item,rate,asSale){const minm=+$("wk-pmarg").value||0;WK_PLAN=wkPlantPlan(minm);const PI=window.PLANT_INFO,before=WP.nodes.length;
+const WK_STAGE=["plantes et dérivés","","chaudrons à la suite","graines achetées","essences du creuset","recette la moins chère"];
+function wkPlantBuild(item,rate,asSale,opts){const minm=opts&&opts.minm!=null?opts.minm:(+$("wk-pmarg").value||0);WK_GFO=opts||{};WK_PLAN=WK_GFO.$plan||gfPlan(minm,WK_GFO);const PI=window.PLANT_INFO,before=WP.nodes.length;
   wkBuild(item,rate,asSale,wkPlantDef);const nodes=WP.nodes.slice(before).filter(n=>!isLogi(n)),res=WRES||wkSolve();
   const isPl=n=>PI.HERBS.includes(n)||PI.SEEDS.includes(n);
   const cau=nodes.filter(n=>n.kind==="cau"),rec=nodes.filter(n=>n.kind==="rec"),src=nodes.filter(n=>n.kind==="src");
@@ -1259,6 +1273,7 @@ function wkPlantBuild(item,rate,asSale){const minm=+$("wk-pmarg").value||0;WK_PL
   ${cau.length?`<b>Chaudrons (${cau.length})</b><ol>${cau.slice().reverse().map(step).join("")}</ol>`:""}
   ${plantSrc.length?`<b>Plantes à récolter</b><div class="wk-chips">${plantSrc.map(n=>chip(n.item,res.srcs[n.item])).join("")}</div>`:""}
   ${der.length?`<b>Dérivés de plantes</b><div class="wk-chips">${der.map(n=>{const o=RECIPES.find(r=>r.id===n.rec);return chip(o.out[0])}).join("")}</div>`:""}
+  ${nodes.some(n=>n.kind==="pdx")?`<b>Creuset de paradoxe</b><div class="wk-chips">${nodes.filter(n=>n.kind==="pdx").map(n=>`<span class="wk-chip">${mIco(21)}${esc(FR[IDX[n.from]])} → ${esc(FR[IDX[GF_ESS]])}</span>`).join("")}</div>`:""}
   ${mach.length?`<b>Autres machines</b><div class="wk-chips">${mach.map(n=>{const o=RECIPES.find(r=>r.id===n.rec);return`<span class="wk-chip">${mIco(o.t)}${esc(machName(o.t))} → ${esc(FR[IDX[o.out[0]]])}</span>`}).join("")}</div>`:""}
   <p class="note${res.profit<0?" warn":""}">Bénéfice de la chaîne : <b>${money(res.profit)}</b> / min${res.profit<0?" : à perte au coût retenu par l'Atelier (coût de base des plantes, modifiable dans « Valeurs et coûts »).":""}</p>
   ${otherSrc.length?`<b>Achats hors plantes</b><div class="wk-chips">${otherSrc.map(n=>chip(n.item,res.srcs[n.item])).join("")}</div>`:`<p class="note">Aucun achat hors plantes.</p>`}
@@ -1268,6 +1283,119 @@ function wkPlantBuild(item,rate,asSale){const minm=+$("wk-pmarg").value||0;WK_PL
 $("wk-plrep").addEventListener("click",e=>{if(e.target.closest("[data-plrep]"))$("wk-plrep").hidden=true});
 ["pointerdown","wheel"].forEach(t=>$("wk-plrep").addEventListener(t,e=>e.stopPropagation()));
 {const pm=store.get("wc-wkpm",null);if(["0","5","10","20"].includes(pm))$("wk-pmarg").value=pm;$("wk-pmarg").addEventListener("change",()=>store.set("wc-wkpm",$("wk-pmarg").value))}
+/* ===== v28 : Usines vertes (plantes → dérivés → chaudron de base / avancé → creuset de paradoxe) ===== */
+/* options d'usine (WK_GFO) : herbs = plantes autorisées (Set, absent = toutes), basic/adv = chaudrons (false = interdit),
+   pdx = creuset de paradoxe, raw = matières premières autorisées. Valeurs par défaut = chaîne plantes de la v24. */
+let WK_GFO={};
+const GF_ESS="Oblivion Essence",GF_VIT="Vitality Essence",GF_PXHEAT=1200;
+const GF_RAWS=new Set(NAME.filter(n=>((XI[n]||[])[3]||[]).includes("Matériaux bruts")&&!HIDDEN.has(n)&&CAT[IDX[n]]!=="liquid"));
+/* creuset de paradoxe (lu dans le code, v19) : 5 s pour une essence, sinon 1500 ÷ valeur, borné entre 0,5 et 1500 s */
+function pdxTime(n){return n===GF_ESS||n===GF_VIT?5:Math.min(1500,Math.max(0.5,VAL[IDX[n]]>0?1500/VAL[IDX[n]]:1500))}
+const gfSeedPlants=sd=>sd==="World Tree Seed"?["World Tree Leaf","World Tree Core"]:sd==="Gentian Seeds"?["Gentian","Gentian Nectar"]:[sd.replace(/ Seeds?$/,"")];
+/* plan des recettes au chaudron, par étages (comme v24) : plantes + dérivés → chaudrons enchaînés → creuset → graines */
+function gfPlan(minm,o){o=o||{};const PI=window.PLANT_INFO;PI.reset();const pick={},avail=new Map(),done=new Set(),own=new Set();
+  const hOK=n=>!o.herbs||o.herbs.has(n),useA=o.adv!==false,useB=o.basic!==false;
+  const derOK=n=>{const d=PI.DER[n];if(!d||!isUnl(d.id))return false;return!o.herbs||d.ings.every(([i])=>PI.HERBS.includes(i)?hOK(i):derOK(i))};
+  const add=(n,c)=>{if(c!=null&&IDX[n]!=null&&!HIDDEN.has(n)&&CAT[IDX[n]]!=="liquid"&&!(o.common&&ENDG.has(n)))avail.set(IDX[n],c)};
+  const stage=lab=>{const IN=[...avail.keys()].sort((a,b)=>VAL[a]-VAL[b]),best={};
+    const keep=r=>{if(!r||!r.out||r.def||pick[r.out]||own.has(r.out)||HIDDEN.has(r.out)||r.ids.includes(IDX[r.out])||r.mpct<minm)return;let c=0;for(const i of r.ids)c+=avail.get(i);
+      const b=best[r.out];if(!b||c<b.cost-1e-9||(Math.abs(c-b.cost)<=1e-9&&r.mpct>b.mpct))best[r.out]={mode:r.ids.length===2?"adv":"basic",ids:r.ids.map(i=>NAME[i]),cost:c,mpct:r.mpct,stage:lab}};
+    const pre=ids=>{const x=TL[resolve((VAL[ids[0]]+VAL[ids[1]]+VAL[ids[2]])*mult(ids))].n;return!pick[x]&&!own.has(x)&&!HIDDEN.has(x)&&!ids.includes(IDX[x])};
+    for(let a=0;a<IN.length;a++){const oa=done.has(IN[a]);for(let b=a;b<IN.length;b++){const ob=oa&&done.has(IN[b]);if(!ob&&useA)keep(evalPair([IN[a],IN[b]]));
+      if(useB)for(let c=b;c<IN.length;c++){if(ob&&done.has(IN[c]))continue;const ids=[IN[a],IN[b],IN[c]];if(pre(ids))keep(evalTriple(ids))}}}
+    IN.forEach(i=>done.add(i));Object.assign(pick,best);return Object.keys(best).length};
+  const chain=lab=>{for(let k=0;k<8;k++){Object.entries(pick).forEach(([n,p])=>{if(!avail.has(IDX[n]))add(n,p.cost)});if(!stage(lab))break}};
+  PI.HERBS.forEach(n=>{if(hOK(n))add(n,PI.plantCost(n))});Object.keys(PI.DER).forEach(n=>{if(derOK(n))add(n,PI.plantCost(n))});
+  if(o.raw)GF_RAWS.forEach(n=>{if(COST[IDX[n]]!=null)add(n,COST[IDX[n]])});
+  stage(0);chain(2);
+  if(o.pdx){/* essence d'oubli au creuset : l'objet déjà disponible le moins cher qui passe en 10 s au plus ; remplace la recette
+    du chaudron quand il revient moins cher (vitalité = oubli + 5 s de creuset) */
+    const src=[...avail.keys()].filter(i=>VAL[i]>=150&&NAME[i]!==GF_ESS&&NAME[i]!==GF_VIT).sort((a,b)=>avail.get(a)-avail.get(b))[0];
+    if(src!=null){const c=avail.get(src);Object.defineProperty(pick,"$ess",{value:{src:NAME[src],cost:c,t:pdxTime(NAME[src])},enumerable:false});
+      [GF_ESS,GF_VIT].forEach(n=>{if(pick[n]&&c<pick[n].cost-1e-9){delete pick[n];avail.delete(IDX[n])}if(!pick[n]){add(n,c);own.add(n)}});stage(4);chain(4)}}
+  PI.SEEDS.forEach(n=>{if(gfSeedPlants(n).some(hOK))add(n,PI.plantCost(n))});stage(3);chain(3);
+  if(o.cheap){/* la moins chère : remplace une recette quand un mélange coûte moins (ingrédients tous moins chers que le produit : pas de boucle) */
+    for(let pass=0;pass<8;pass++){let ch=0;const IN=[...avail.keys()].sort((a,b)=>VAL[a]-VAL[b]),C=IN.map(i=>avail.get(i));
+      const take=(r,c)=>{if(!r||!r.out||r.def||r.mpct<minm||r.ids.includes(IDX[r.out]))return;const b=pick[r.out];if(!b||c>=b.cost-1e-9||!r.ids.every(i=>avail.get(i)<c))return;
+        pick[r.out]={mode:r.ids.length===2?"adv":"basic",ids:r.ids.map(i=>NAME[i]),cost:c,mpct:r.mpct,stage:5};avail.set(IDX[r.out],c);ch++};
+      for(let a=0;a<IN.length;a++)for(let b=a;b<IN.length;b++){const cab=C[a]+C[b];
+        if(useA){const r=evalPair([IN[a],IN[b]]);if(r&&r.out&&pick[r.out]&&!own.has(r.out))take(r,cab)}
+        if(useB)for(let c=b;c<IN.length;c++){const ids=[IN[a],IN[b],IN[c]],x=TL[resolve((VAL[ids[0]]+VAL[ids[1]]+VAL[ids[2]])*mult(ids))].n,px=pick[x],cc=cab+C[c];
+          if(!px||own.has(x)||cc>=px.cost-1e-9)continue;take(evalTriple(ids),cc)}}
+      if(!ch)break}}
+  return pick}
+/* une usine : mêmes choix que la chaîne plantes de l'Atelier (wkPlantDef), calculée sans toucher au canevas.
+   Écartée (null) si une étape sort des contraintes : chaudron hors du plan (repli habituel). */
+function gfDesign(P,rate,o,plan){const PI=window.PLANT_INFO,k=SET.speed/100,keepP=WK_PLAN,keepO=WK_GFO;WK_PLAN=plan;WK_GFO=o;
+  try{const N={},order=[];let bad=false;
+    const visit=(item,path,d)=>{if(N[item]||bad)return N[item];const def=d>=14?{kind:"src",item}:wkPlantDef(item,path),node={...def,item};
+      if(node.kind==="cau"&&!plan[item]){bad=true;return null}
+      const p=wkPorts(node);node.p=p;N[item]=node;const np=new Set(path);np.add(item);uniqIns(p).forEach(([i])=>visit(i,np,d+1));order.push(node);return node};
+    const top=visit(P,new Set([P]),0);if(bad||!top||top.kind==="src")return null;
+    const T=n=>n.kind==="cau"?n.p.T:n.kind==="rec"?n.p.o.time/machMult(n.p.o.t):n.kind==="pdx"?n.p.T:null;
+    const fin=top;if(!fin.p.outs.length||!T(fin))return null;
+    if(!(rate>0))rate=60*k/T(fin)*fin.p.outs[0].q*(fin.p.p??1);
+    /* demande : du produit final vers les sources ; ratés et sous-produits réutilisés quand l'objet sert dans l'usine */
+    const rev=order.slice().reverse();let D,RUN,BY,USED={};
+    for(let it=0;it<40;it++){D={};RUN={};BY={};D[P]=rate;
+      rev.forEach(n=>{const need=Math.max(0,(D[n.item]||0)-(USED[n.item]||0));if(n.kind==="src"){RUN[n.item]=need;return}
+        const oq=n.p.outs[0]?n.p.outs[0].q:1,pp=n.p.p??1,r=pp>0?need/(oq*pp):0;RUN[n.item]=r;uniqIns(n.p).forEach(([i,q])=>D[i]=(D[i]||0)+r*q);
+        (n.p.byp||[]).forEach(([i,q])=>BY[i]=(BY[i]||0)+r*q)});
+      const nu={};Object.keys(BY).forEach(i=>{if(D[i]>0)nu[i]=Math.min(BY[i],D[i])});
+      const same=Object.keys({...nu,...USED}).every(i=>Math.abs((USED[i]||0)-(nu[i]||0))<1e-9);USED=nu;if(same)break}
+    /* sources : plantes autorisées, graines, matières premières si autorisées ; sinon l'usine n'est pas « verte » */
+    const herbOK=n=>PI.HERBS.includes(n)&&(!o.herbs||o.herbs.has(n));
+    const srcs=order.filter(n=>n.kind==="src"),buy=srcs.filter(n=>!herbOK(n.item)&&!PI.SEEDS.includes(n.item)&&!(o.raw&&GF_RAWS.has(n.item)));
+    const harvest={};srcs.forEach(n=>{if(PI.HERBS.includes(n.item))harvest[n.item]=RUN[n.item]});
+    const unit=n=>PI.HERBS.includes(n)||PI.SEEDS.includes(n)?PI.plantCost(n):COST[IDX[n]];
+    let cost=0;srcs.forEach(n=>{const u=unit(n.item);cost+=(RUN[n.item]||0)*(u??0)});
+    const surplus=[];
+    /* gentiane et nectar viennent de la même graine (80 + 80) : le surplus de l'un est récolté (et payé) avec l'autre */
+    if(harvest["Gentian"]||harvest["Gentian Nectar"]){const g=harvest["Gentian"]||0,nc=harvest["Gentian Nectar"]||0,m=Math.max(g,nc);
+      [["Gentian",m-g,"récolté avec le nectar"],["Gentian Nectar",m-nc,"récolté avec la gentiane"]].forEach(([i,v,why])=>{if(v>1e-9){surplus.push({item:i,rate:v,why});harvest[i]=(harvest[i]||0)+v;cost+=v*(PI.plantCost(i)??0)}})}
+    Object.keys(BY).forEach(i=>{const left=BY[i]-(USED[i]||0);if(left>1e-9)surplus.push({item:i,rate:left,why:"raté ou sous-produit"})});
+    /* bâtiments, chauffe */
+    const bld={},nodes=[];let fuelP=0;const addB=(key,label,m,n)=>{bld[key]=bld[key]||{label,n:0,m:0};bld[key].n+=n??Math.ceil(m-1e-9);bld[key].m+=m};
+    order.forEach(n=>{const r=RUN[n.item]||0,t=T(n);let m=null;
+      if(n.kind==="cau"){m=r*t/k/60;addB(n.mode==="adv"?"adv":"22",n.mode==="adv"?"Chaudron avancé":"Chaudron",m);const tg=TARGETS[n.p.r.out];fuelP+=r*craftHeat(tg)*craftTime(tg)}
+      else if(n.kind==="rec"){m=r*n.p.o.time/k/60/machMult(n.p.o.t);addB(String(n.p.o.t),machName(n.p.o.t),m);if(n.p.o.t===21)fuelP+=r*GF_PXHEAT*n.p.o.time}
+      else if(n.kind==="pdx"){m=r*t/k/60;addB("21",machName(21),m);fuelP+=r*GF_PXHEAT*t}
+      nodes.push({n,run:r,m,ins:uniqIns(n.p).map(([i,q])=>[i,r*q])})});
+    const fpp=fuelPerP();
+    const val=SELL[P]!=null?SELL[P]:(BASECOST[P]&&!HIDDEN.has(P)?BASECOST[P][0]:null);if(val==null)return null;
+    /* surplus : le débouché qui rapporte le plus par bâtiment (vente, deuxième produit au chaudron, creuset si l'essence se vend) ;
+       sinon, avec le creuset coché, une idée : en faire des essences (non vendables : aucune valeur comptée) */
+    let extra=0,belts=0;const essSell=SELL[GF_ESS];
+    surplus.forEach(s=>{const opts=[],nbP=Math.ceil(s.rate*pdxTime(s.item)/k/60-1e-9);if(SELL[s.item]!=null)opts.push({how:"vente",gain:SELL[s.item]*s.rate,bld:0,label:"vendu en boutique"});
+      if(o.pdx&&essSell!=null)opts.push({how:"creuset",gain:essSell*s.rate-(SET.countFuel&&fpp!=null?s.rate*GF_PXHEAT*pdxTime(s.item)*fpp:0),bld:nbP,m:s.rate*pdxTime(s.item)/k/60,bkey:"21",label:`creuset de paradoxe → ${fmt(s.rate)} essences d'oubli / min`});
+      const sp=gfSecond(s.item,s.rate,o);if(sp)opts.push(sp);
+      const best=opts.filter(x=>x.gain>0).sort((a,b)=>b.gain/(1+b.bld)-a.gain/(1+a.bld))[0];
+      if(best){s.use=best;extra+=best.gain;if(best.bld)addB(best.bkey,best.bkey==="21"?machName(21):best.bkey==="adv"?"Chaudron avancé":"Chaudron",best.m||0,best.bld);
+        if(best.plants)Object.entries(best.plants).forEach(([i,v])=>{harvest[i]=(harvest[i]||0)+v;belts+=Math.max(1,Math.ceil(v/(SET.belt||60)-1e-9))});if(best.bld)belts+=Math.max(1,Math.ceil(s.rate/(SET.belt||60)-1e-9))}
+      else s.use=o.pdx?{how:"suggestion",gain:0,bld:0,label:`idée : creuset de paradoxe → ${fmt(s.rate)} essences d'oubli / min (${nbP} creuset${nbP>1?"s":""}, essences non vendables)`}:null});
+    if(SET.countFuel&&fpp!=null)cost+=fuelP*fpp;
+    const buildings=Object.values(bld).reduce((a,b)=>a+b.n,0),profit=val*rate-cost+extra;
+    nodes.forEach(x=>x.ins.forEach(([i,f])=>{if(!liquid(i))belts+=Math.max(1,Math.ceil(f/(SET.belt||60)-1e-9))}));belts+=Math.max(1,Math.ceil(rate/(SET.belt||60)-1e-9));
+    const depth={};const dep=n=>{if(depth[n.item]!=null)return depth[n.item];depth[n.item]=0;let m=0;uniqIns(n.p).forEach(([i])=>{if(N[i])m=Math.max(m,dep(N[i])+1)});return depth[n.item]=m};order.forEach(dep);
+    return{P,rate,val,cost,fuelCost:fpp!=null?fuelP*fpp:null,extra,profit,buildings,per:buildings?profit/buildings:profit,bld,nodes,harvest,buy:buy.map(n=>[n.item,RUN[n.item]]),green:!buy.length,surplus,belts,top:fin,reused:USED,plan,depth,
+      zero:!surplus.length,recycled:surplus.length>0&&surplus.every(s=>s.use&&s.use.gain>0)}}
+  finally{WK_PLAN=keepP;WK_GFO=keepO}}
+/* deuxième produit : une recette au chaudron qui consomme le surplus avec d'autres plantes autorisées */
+function gfSecond(S,rate,o){const PI=window.PLANT_INFO,si=IDX[S],k=SET.speed/100;if(si==null)return null;
+  const pl=PI.HERBS.filter(n=>!o.herbs||o.herbs.has(n)).map(n=>IDX[n]).filter(i=>PI.plantCost(NAME[i])!=null);let best=null;
+  const test=ids=>{const r=ids.length===2?evalPair(ids):evalTriple(ids);if(!r||!r.out||r.def||r.ids.includes(IDX[r.out])||r.mpct<(o.minm??5))return;const v=SELL[r.out];if(v==null||(o.common&&ENDG.has(r.out)))return;
+    const nS=ids.filter(i=>i===si).length,runs=rate/nS,plants={};let c=0;ids.forEach(i=>{if(i!==si){c+=PI.plantCost(NAME[i]);plants[NAME[i]]=(plants[NAME[i]]||0)+runs}});const gain=(v-c)*runs;if(gain<=0)return;
+    const m=runs*craftTime(TARGETS[r.out])/k/60,nb=Math.ceil(m-1e-9);const g={how:"second",gain,bld:nb,m,plants,bkey:ids.length===2?"adv":"22",label:`${ids.length===2?"chaudron avancé":"chaudron"} : ${ids.map(i=>FR[i]).join(" + ")} → ${FR[IDX[r.out]]}`,r};
+    if(!best||g.gain/(1+g.bld)>best.gain/(1+best.bld))best=g};
+  if(o.adv!==false)pl.forEach(a=>test([si,a]));if(o.basic!==false)pl.forEach((a,x)=>pl.slice(x).forEach(b=>test([si,a,b])));
+  return best}
+/* toutes les usines vertes rentables (une par produit vendable ou intermédiaire) */
+/* o.best : pour chaque produit, l'usine qui rapporte le plus par bâtiment entre le plan « plantes d'abord » et le plan « la moins chère » */
+function gfGallery(o){if(o.best){const A=gfGallery({...o,best:false,cheap:false}),B=gfGallery({...o,best:false,cheap:true}),m={};
+    A.list.concat(B.list).forEach(d=>{if(!m[d.P]||d.per>m[d.P].per+1e-9)m[d.P]=d});return{plan:A.plan,list:Object.values(m)}}
+  const plan=gfPlan(o.minm??5,o),PI=window.PLANT_INFO,cands=new Set([...Object.keys(plan),...Object.keys(PI.DER)]);
+  NAME.forEach(n=>{if(SELL[n]!=null&&(RIDX[n]||{make:[]}).make.length&&!HIDDEN.has(n))cands.add(n)});if(plan.$ess){cands.add(GF_ESS);cands.add(GF_VIT)}
+  const out=[];cands.forEach(P=>{if(PI.HERBS.includes(P)||PI.SEEDS.includes(P)||(o.common&&ENDG.has(P)))return;const d=gfDesign(P,null,o,plan);if(d&&d.green&&d.buildings>0&&d.profit>0)out.push(d)});return{plan,list:out}}
 function wkBounds(){if(!WP.nodes.length)return null;let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;WP.nodes.forEach(n=>{x1=Math.min(x1,n.x);y1=Math.min(y1,n.y);x2=Math.max(x2,n.x+WK.W);y2=Math.max(y2,n.y+wkH(n))});return{x1,y1,x2,y2}}
 function wkFit(all){const b=wkBounds(),c=$("wk-canvas");if(!b||!c)return;wkFitted=true;const w=c.clientWidth||900,h=c.clientHeight||600;
   const zf=Math.min(1.2,Math.min(w/(b.x2-b.x1+80),h/(b.y2-b.y1+80))),z=all?Math.max(.15,zf):Math.max(.35,zf);const cw=(b.x2-b.x1)*z,ch=(b.y2-b.y1)*z;
@@ -1350,7 +1478,7 @@ function wkSVG(){const b=wkBounds();if(!b){toast("Atelier vide");return}const re
     out+=`<rect x="${x}" y="${y}" width="${WK.W}" height="${h}" rx="10" fill="${v("--panel")}" stroke="${c}" stroke-width="2"/><rect x="${x}" y="${y}" width="6" height="${h}" rx="3" fill="${c}"/><text x="${x+14}" y="${y+24}" font-size="14" font-weight="700" fill="${v("--ink")}">${t(isLogi(n)?mn:(it?frn(it):"?"))}</text><text x="${x+14}" y="${y+42}" font-size="11" fill="${v("--muted")}">${t(isLogi(n)?frn(it):mn)}</text>${o.m!=null?`<text x="${x+WK.W-12}" y="${y+30}" font-size="18" font-weight="700" text-anchor="end" fill="${c}">${Math.ceil(o.m-1e-9)}</text>`:""}<text x="${x+14}" y="${y+h-14}" font-size="11" fill="${v("--muted")}">${t(o.m!=null?`${fmt(o.runs)} fabrications / min · ${fmt(o.m)} machines`:n.kind==="sale"?`${fmt(+n.target||0)} / min`:`${fmt(o.runs||0)} / min`)}</text>`});
   out+=`</svg>`;wkSaveFile(out,wkFname(".svg"),"image/svg+xml")}
 function wkImportText(txt,fname){try{const d=JSON.parse(txt);const p=d.project||d;if(!Array.isArray(p.nodes)||!Array.isArray(p.links))throw 0;
-  p.nodes=p.nodes.filter(n=>n&&typeof n.id==="number"&&(["rec","cau","src","sale"].includes(n.kind)||LOGI[n.kind])).map(n=>({...n,x:+n.x||0,y:+n.y||0}));p.links=p.links.filter(l=>l&&typeof l.item==="string");p.seq=Math.max(1,...p.nodes.map(n=>n.id+1));
+  p.nodes=p.nodes.filter(n=>n&&typeof n.id==="number"&&(["rec","cau","src","sale","pdx"].includes(n.kind)||LOGI[n.kind])).map(n=>({...n,x:+n.x||0,y:+n.y||0}));p.links=p.links.filter(l=>l&&typeof l.item==="string");p.seq=Math.max(1,...p.nodes.map(n=>n.id+1));
   let name=String(d.name||fname.replace(/\..*$/,"")).slice(0,60)||"Import";while(WDB.projects[name])name+=" (2)";WDB.projects[name]=p;WDB.meta[name]={updated:new Date().toISOString()};wkSwitch(name);toast("Atelier ouvert")}catch(e){toast("Fichier non reconnu")}}
 function wkImport(file){const fr=new FileReader();fr.onload=()=>wkImportText(fr.result,file.name);fr.readAsText(file)}
 async function wkOpenFile(){if(window.showOpenFilePicker&&window.self===window.top){try{const [h]=await window.showOpenFilePicker({types:[{description:"Plan WikiChaudron",accept:{"application/json":[".json"]}}]});const f=await h.getFile();wkImportText(await f.text(),f.name);return}catch(e){if(e&&e.name==="AbortError")return}}$("wk-file").click()}
@@ -1408,6 +1536,7 @@ $("wk-panel").addEventListener("change",e=>{const n=wkNode([...WSEL][0]);if(!n)r
   else if(e.target.id==="wk-model"){wkSnap();n.model=+e.target.value}
   else if(e.target.id==="wk-target"){wkSnap();n.target=Math.max(0,+e.target.value||0)}
   else if(e.target.id==="wk-max"){wkSnap();n.max=Math.max(0,+e.target.value||0)}
+  else if(e.target.id==="wk-pfrom"){const i=pickItem(e.target.value);if(i<0){toast("Objet non reconnu");return}wkSnap();n.from=NAME[i];WP.links=WP.links.filter(l=>l.to!==n.id||l.item===n.from)}
   else if(e.target.id==="wk-litem"){const i=pickItem(e.target.value);wkSnap();n.item=i<0?null:NAME[i];WP.links=WP.links.filter(l=>(l.to!==n.id&&l.from!==n.id)||l.item===n.item)}
   else if(e.target.classList.contains("wk-ing")){const v=e.target.value.trim(),i=pickItem(v);if(v&&i<0){toast("Ingrédient non reconnu");return}wkSnap();n.ids=n.ids||[];n.ids[+e.target.dataset.k]=i<0?null:NAME[i];n.ids=n.ids.filter(Boolean);relinkCheck(n)}
   wkSave();wkRender()});
@@ -1829,6 +1958,107 @@ function gameChip(){const el=$("game-chip");if(!el)return;const has=!!(SET.unl||
 $("game-chip").addEventListener("click",e=>{if(e.target.closest("#gc-load"))$("save-file").click()});
 $("game-chip").addEventListener("change",e=>{if(e.target.id==="gc-unl"){SET.onlyUnl=e.target.checked;store.set("wc-set",SET);markDirty();show(curTab);toast(SET.onlyUnl?"Seulement tes recettes débloquées":"Toutes les recettes")}});
 gameChip();
+/* ===== v28 : onglet « Usines vertes » et « toutes les façons d'obtenir » (Je veux fabriquer…) ===== */
+{const PI=window.PLANT_INFO;let GF=null,GFD=null;
+ let st=store.get("wc-gf",null);if(!st||typeof st!=="object"||Array.isArray(st))st={};
+ const herbsOn=new Set(Array.isArray(st.herbs)?st.herbs.filter(n=>PI.HERBS.includes(n)):PI.HERBS);if(!herbsOn.size)PI.HERBS.forEach(n=>herbsOn.add(n));
+ $("gf-herbs").innerHTML=PI.HERBS.map(n=>`<button type="button" class="chip" data-gfh="${esc(n)}" aria-pressed="${herbsOn.has(n)}">${ico(n)}${esc(FR[IDX[n]])}</button>`).join("");
+ const sv=(id,v,ok)=>{if(v==null||(ok&&!ok.includes(v)))return;const e=$(id);if(e.type==="checkbox")e.checked=!!v;else e.value=v};
+ sv("gf-basic",st.basic);sv("gf-adv",st.adv);sv("gf-pdx",st.pdx);sv("gf-raw",st.raw);sv("gf-margin",st.margin,["0","5","10","20"]);sv("gf-sort",st.sort,["per","profit","bld"]);
+ sv("gf-size",st.size,["0","10","30","100"]);sv("gf-plan",st.plan,["best","cheap","plants"]);sv("gf-sell",st.sell);sv("gf-inter",st.inter);sv("gf-zero",st.zero);if(typeof st.rate==="string"&&+st.rate>0)$("gf-rate").value=st.rate;
+ if(!$("gf-basic").checked&&!$("gf-adv").checked)$("gf-basic").checked=true;
+ let CHK=store.get("wc-gfchk",{});if(!CHK||typeof CHK!=="object"||Array.isArray(CHK))CHK={};
+ const opts=()=>({herbs:herbsOn.size===PI.HERBS.length?null:herbsOn,basic:$("gf-basic").checked,adv:$("gf-adv").checked,pdx:$("gf-pdx").checked,raw:$("gf-raw").checked,minm:+$("gf-margin").value,common:COMMON,cheap:$("gf-plan").value==="cheap",best:$("gf-plan").value==="best"});
+ const save=()=>store.set("wc-gf",{herbs:[...herbsOn],basic:$("gf-basic").checked,adv:$("gf-adv").checked,pdx:$("gf-pdx").checked,raw:$("gf-raw").checked,margin:$("gf-margin").value,sort:$("gf-sort").value,size:$("gf-size").value,plan:$("gf-plan").value,sell:$("gf-sell").checked,inter:$("gf-inter").checked,zero:$("gf-zero").checked,rate:$("gf-rate").value});
+ const sorts={per:(a,b)=>b.per-a.per,profit:(a,b)=>b.profit-a.profit,bld:(a,b)=>a.buildings-b.buildings||b.profit-a.profit};
+ const fr=n=>esc(FR[IDX[n]]);
+ const surTag=d=>d.zero?" · zéro surplus":d.recycled?" · surplus recyclé":"";
+ const recLine=d=>{const n=d.top;if(n.kind==="cau")return`${recipeHTML(n.ids.map(x=>IDX[x]))} ${n.mode==="adv"?'<span class="pill adv">avancé</span>':'<span class="pill">base</span>'} ${mpill(n.p.r)}`;
+   if(n.kind==="rec")return`${mIco(n.p.o.t)} ${esc(machName(n.p.o.t))} : ${ingChips(n.p.o.ings)}`;if(n.kind==="pdx")return`${mIco(21)} ${esc(machName(21))} ← ${fr(n.from)}`;return""};
+ const harvTop=d=>Object.entries(d.harvest).filter(x=>x[1]>1e-9).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,v])=>`${fr(n)} ${fmt(v)}`).join(" · ");
+ const gcard=(d,first)=>`<div class="card gf-card${first?" top":""}" data-gfp="${esc(d.P)}" tabindex="0" role="button"><span class="k">${first?"N°1 · ":""}${SELL[d.P]!=null?"Vendable":"Intermédiaire"}${surTag(d)}</span>
+   <div style="display:flex;align-items:center;gap:8px">${ico(d.P,"lg")}<b>${fr(d.P)}</b></div><div>${recLine(d)}</div>
+   <div class="stats"><span>Par bâtiment <b>${money(d.per)}</b>/min</span><span>Bénéfice <b>${money(d.profit)}</b>/min</span><span><b class="num">${d.buildings}</b> bâtiment${d.buildings>1?"s":""} · <b class="num">${fmt(d.rate)}</b>/min</span><span class="en">🌱 ${harvTop(d)} /min</span></div><div class="acts"><button class="btn ghost sm" type="button" data-gfwkc="${esc(d.P)}">▶ Atelier</button></div></div>`;
+ /* schéma : une colonne par profondeur dans la chaîne (sources à gauche, produit final à droite) */
+ const kindLab=n=>n.kind==="src"?(PI.HERBS.includes(n.item)?"récolte":"achat"):n.kind==="cau"?(n.mode==="adv"?"chaudron avancé":"chaudron"):n.kind==="pdx"?machName(21).toLowerCase():machName(n.p.o.t).toLowerCase();
+ const bTxt=m=>{const n=Math.ceil(m-1e-9);return`${n} bâtiment${n>1?"s":""} · charge ${Math.round(m/n*100)} %`};
+ function detailHTML(d){const maxD=Math.max(...Object.values(d.depth)),cols=[];
+   for(let k=0;k<=maxD;k++)cols.push(d.nodes.filter(x=>d.depth[x.n.item]===k));
+   const box=x=>{const n=x.n,top=n===d.top;return`<div class="gf-node${top?" top":""}">${ico(n.item)}<b>${fr(n.item)}</b> <span class="num">${fmt(x.run*(n.p.outs[0]?n.p.outs[0].q:1))}/min</span>
+     <div class="gf-in">${esc(kindLab(n))}${x.m!=null?` · ${bTxt(x.m)}`:""}${n.kind==="pdx"?` · ${fmt(pdxTime(n.from))} s par objet`:""}</div>${x.ins.length?`<div class="gf-in">← ${x.ins.map(([i,f])=>`${ico(i)}${fr(i)} <b class="num">${fmt(f)}</b>`).join(" · ")}</div>`:""}
+     ${top?`<div class="gf-in">→ ${SELL[d.P]!=null?`vente ${fmt(d.val*d.rate)} cu/min`:`valeur ${fmt(d.val*d.rate)} cu/min (coût de base)`}</div>`:""}</div>`};
+   const sur=d.surplus.map(s=>`<div class="gf-node sur">${ico(s.item)}<b>${fr(s.item)}</b> <span class="num">${fmt(s.rate)}/min</span><div class="gf-in">surplus (${esc(s.why)}) → ${s.use?`${esc(s.use.label)}${s.use.gain>0?` <b>${money(s.use.gain)}</b>/min`:""}`:"à stocker"}</div></div>`).join("");
+   const flow=cols.map((c,k)=>`<div class="gf-col"><h4>${k===0?"Récolte":k===cols.length-1?"Produit final":"Étape "+k}</h4>${c.map(box).join("")}${k===cols.length-1?sur:""}</div>`).join('<div class="gf-arrow">→</div>');
+   const ck=CHK[d.P]||{},cb=(key,html)=>`<label class="gf-ck"><input type="checkbox" data-gfck="${esc(key)}" ${ck[key]?"checked":""}> ${html}</label>`;
+   const keys=Object.keys(d.bld).sort();
+   const list=`<table><thead><tr><th>À construire</th><th class="r">Nombre</th><th class="r">Charge</th></tr></thead><tbody>${keys.map(k=>`<tr><td>${cb("b"+k,`${mIco(k)} ${esc(d.bld[k].label)}`)}</td><td class="r num"><b>${d.bld[k].n}</b></td><td class="r num">${d.bld[k].m?Math.round(d.bld[k].m/d.bld[k].n*100)+" %":"—"}</td></tr>`).join("")}
+     <tr><td>${cb("belts",`<img class="ico" src="${iconURL("logi-belt")}" alt=""> Convoyeurs (tronçons à ${fmt(SET.belt||60)}/min)`)}</td><td class="r num"><b>${d.belts}</b></td><td></td></tr></tbody></table>`;
+   const harv=Object.entries(d.harvest).filter(x=>x[1]>1e-9).map(([n,v])=>cb("h"+n,`${ico(n)}${fr(n)} <b class="num">${fmt(v)}/min</b>`)).join("");
+   return`<div class="sh-head">${ico(d.P,"xl")}<div><h2>Usine verte : ${fr(d.P)}</h2><div class="en">${fmt(d.rate)} / min · ${d.buildings} bâtiments${surTag(d)}</div></div></div>
+   <div class="kv"><div><span>Bénéfice</span><b>${money(d.profit)}</b><small class="en">par minute${SET.countFuel?", combustible déduit":""}</small></div><div><span>Par bâtiment</span><b>${money(d.per)}</b><small class="en">par minute</small></div>${SELL[d.P]==null?`<div><span>Intermédiaire</span><b>${cu(d.val*d.rate)}</b><small class="en">valeur au coût de base (non vendable : l'Atelier n'en compte pas la vente)</small></div>`:""}<div><span>${d.buy.length?"Plantes et achats":"Coût des plantes"}</span><b>${cu(d.cost)}</b><small class="en">par minute</small></div>${d.extra?`<div><span>Surplus valorisé</span><b>${money(d.extra)}</b><small class="en">par minute</small></div>`:""}</div>
+   <div class="acts"><button class="btn solid" type="button" data-gfwk="${esc(d.P)}" title="Pose toute l'usine dans l'Atelier, ventes de surplus et deuxième produit compris (les ratés de machine restent à relier à la main)">▶ Ouvrir dans l'Atelier</button>${d.top.kind==="cau"?`<button class="btn ghost" type="button" data-gfsim="${esc(d.top.mode+"|"+d.top.ids.join("|"))}">Simuler la recette finale</button>`:""}<button class="btn ghost" type="button" data-gfx="1">Fermer</button></div>
+   <h3>Schéma par étages</h3><div class="gf-flow">${flow}</div>
+   <div class="grid2"><div><h3>Liste de construction <small class="en">(coche au fur et à mesure)</small></h3><div class="tbl">${list}</div></div><div><h3>Plantes à récolter</h3><div class="gf-harv">${harv||'<span class="en">—</span>'}</div>${d.buy.length?`<h3>Achats</h3><div class="wk-chips">${d.buy.map(([n,v])=>`<span class="wk-chip">${ico(n)}${fr(n)} <b>${fmt(v)}/min</b></span>`).join("")}</div>`:""}</div></div>`}
+ const planFor=(P,o)=>{const g=GF&&GF.list.find(x=>x.P===P);return g?g.plan:gfPlan(o.minm,o)};
+ function showDetail(P,scroll){const o=opts(),rate=+$("gf-rate").value||null;GFD=gfDesign(P,rate,o,planFor(P,o));const el=$("gf-detail");el.hidden=false;
+   if(!GFD){el.innerHTML=`<p class="note warn">Pas d'usine verte possible pour ${fr(P)} avec ces réglages.</p>`;return}
+   el.innerHTML=detailHTML(GFD)+(GFD.green?"":`<p class="note warn">Cette usine doit acheter des objets hors plantes : ${GFD.buy.map(([n])=>fr(n)).join(", ")}.</p>`)+(GFD.profit>0?"":`<p class="note warn">Cette usine perd de l'argent avec ces réglages.</p>`);
+   if($("gf-prod").querySelector(`option[value="${CSS.escape(P)}"]`))$("gf-prod").value=P;if(scroll!==false&&el.scrollIntoView)el.scrollIntoView({behavior:"smooth",block:"start"})}
+ /* calcul des usines (réglages qui les changent) ; tri, taille et filtres ne refont que l'affichage */
+ function gfRun(){const o=opts();GF=gfGallery(o);gfShow()}
+ function gfShow(){save();if(!GF)return gfRun();
+   const prods=GF.list.map(d=>d.P).sort((a,b)=>FR[IDX[a]].localeCompare(FR[IDX[b]],"fr")),cur=$("gf-prod").value;
+   $("gf-prod").innerHTML=`<option value="">Tous (galerie)</option>`+prods.map(n=>`<option value="${esc(n)}">${fr(n)}</option>`).join("");if(prods.includes(cur))$("gf-prod").value=cur;
+   const mx=+$("gf-size").value||Infinity,L=GF.list.filter(d=>(SELL[d.P]!=null?$("gf-sell").checked:$("gf-inter").checked)&&(!$("gf-zero").checked||d.zero)&&d.buildings<=mx).sort(sorts[$("gf-sort").value]||sorts.per);
+   $("gf-count").textContent=`${L.length} usine${L.length>1?"s":""} verte${L.length>1?"s":""} rentable${L.length>1?"s":""}${L.length<GF.list.length?` (sur ${GF.list.length})`:""}`;
+   $("gf-cards").innerHTML=L.length?L.map((d,i)=>gcard(d,i===0)).join(""):`<p class="note">Aucune usine verte rentable avec ces réglages : ajoute des plantes ou un chaudron, élargis la taille, autorise les matières premières ou décoche « Objets courants seulement » (en haut).</p>`;
+   if($("gf-prod").value)showDetail($("gf-prod").value,false);else $("gf-detail").hidden=true}
+ $("gf-herbs").addEventListener("click",e=>{const b=e.target.closest("[data-gfh]");if(!b)return;const n=b.dataset.gfh;if(herbsOn.has(n)){if(herbsOn.size===1)return;herbsOn.delete(n)}else herbsOn.add(n);b.setAttribute("aria-pressed",herbsOn.has(n));gfRun()});
+ ["gf-basic","gf-adv","gf-pdx","gf-raw","gf-margin","gf-plan"].forEach(id=>$(id).addEventListener("change",()=>{if((id==="gf-basic"||id==="gf-adv")&&!$("gf-basic").checked&&!$("gf-adv").checked){$(id).checked=true;toast("Garde au moins un chaudron")}gfRun()}));
+ ["gf-sort","gf-size","gf-sell","gf-inter","gf-zero"].forEach(id=>$(id).addEventListener("change",()=>gfShow()));
+ $("gf-prod").addEventListener("change",()=>{save();if($("gf-prod").value)showDetail($("gf-prod").value);else $("gf-detail").hidden=true});
+ $("gf-rate").addEventListener("change",()=>{save();if($("gf-prod").value)showDetail($("gf-prod").value,false)});
+ /* Atelier : la chaîne, puis les débouchés des surplus récoltés (vente, deuxième produit au chaudron) */
+ function toAtelier(d){const P=d.P,o={...opts(),$plan:d.plan};$("wk-item").value=FR[IDX[P]];$("wk-rate").value=+d.rate.toFixed(2);show("atelier");wkPlantBuild(P,d.rate,SELL[P]!=null,o);
+   let n=0;const made={};WP.nodes.forEach(x=>{if(x.kind==="src")made[x.item]=made[x.item]||x});
+   d.surplus.forEach(s=>{if(!s.use||!(s.use.gain>0))return;const b=wkBounds(),x=b.x2+80,y=b.y2+40;
+     /* gentiane / nectar : récoltés ensemble, la source du surplus est ajoutée si la chaîne n'en avait pas ; un raté de machine n'a pas de sortie à relier */
+     let src=made[s.item];if(!src&&(s.item==="Gentian"||s.item==="Gentian Nectar"))src=made[s.item]=wkAdd({kind:"src",item:s.item,max:0,x:b.x1-WK.W-110,y});if(!src)return;
+     if(s.use.how==="vente"){const sl=wkAdd({kind:"sale",item:s.item,target:+s.rate.toFixed(3),x,y});WP.links.push({from:src.id,to:sl.id,item:s.item});n++}
+     else if(s.use.how==="second"){const ids=s.use.r.ids.map(i=>NAME[i]),c=wkAdd({kind:"cau",mode:ids.length===2?"adv":"basic",ids,x,y});WP.links.push({from:src.id,to:c.id,item:s.item});
+       const out=s.use.r.out,runs=s.rate/ids.filter(i=>i===s.item).length;wkFeed(c,1,new Set([out]),made,wkPlantDef);
+       if(SELL[out]!=null){const sl=wkAdd({kind:"sale",item:out,target:+runs.toFixed(3),x:x+WK.W+110,y});WP.links.push({from:c.id,to:sl.id,item:out})}else c.target=+runs.toFixed(3);n++}});
+   if(n){wkRender();wkSave();toast(`Usine verte posée, avec ${n} débouché${n>1?"s":""} de surplus`)}}
+ $("gf-cards").addEventListener("click",e=>{const w=e.target.closest("[data-gfwkc]");if(w){const o=opts(),d=gfDesign(w.dataset.gfwkc,+$("gf-rate").value||null,o,planFor(w.dataset.gfwkc,o));if(d)toAtelier(d);return}
+   const c=e.target.closest("[data-gfp]");if(c&&!e.target.closest("[data-item],button"))showDetail(c.dataset.gfp)});
+ $("gf-cards").addEventListener("keydown",e=>{const c=e.target.closest("[data-gfp]");if(c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();showDetail(c.dataset.gfp)}});
+ $("gf-detail").addEventListener("change",e=>{const c=e.target.closest("[data-gfck]");if(!c||!GFD)return;const m=CHK[GFD.P]=CHK[GFD.P]||{};if(c.checked)m[c.dataset.gfck]=1;else delete m[c.dataset.gfck];store.set("wc-gfchk",CHK)});
+ $("gf-detail").addEventListener("click",e=>{const w=e.target.closest("[data-gfwk]");if(w&&GFD){toAtelier(GFD);return}
+   const s=e.target.closest("[data-gfsim]");if(s){const[m,...ns]=s.dataset.gfsim.split("|");setMode(m);SLOTS.forEach((id,k)=>{$(id).value=ns[k]!=null?FR[IDX[ns[k]]]:""});show("sim");runSim();return}
+   if(e.target.closest("[data-gfx]")){$("gf-detail").hidden=true;$("gf-prod").value="";save()}});
+ TABS.push("green");dirty.green=true;TAB_GROUP.green="usine";
+ const _showG=show;show=function(t){_showG(t);if(t==="green"&&dirty.green){gfRun();dirty.green=false}};
+ window.GF_UI={run:()=>gfRun(),detail:P=>showDetail(P),last:()=>GF,design:()=>GFD};
+
+ /* --- Je veux fabriquer… : toutes les façons d'obtenir le produit (mêmes filtres que la liste en dessous) --- */
+ let SPLAN=null;const _mdG=markDirty;markDirty=function(){_mdG();SPLAN=null;PI.reset()};
+ window.searchAll=function(out,O){if(!out||IDX[out]==null)return"";const inc=O?O.inc:-1,incN=inc>=0?NAME[inc]:null;
+   const make=(RIDX[out]||{make:[]}).make.filter(o=>!o.hid&&(!incN||o.ings.some(([i])=>i===incN)));
+   const other=MODE==="adv"?"basic":"adv",tg=TARGETS[out]!=null&&!HIDDEN.has(out);let ob=null;
+   if(tg){const keep=MODE;MODE=other;let r=[];try{r=searchFor(out,{...O,safe:false})}finally{MODE=keep}const s=r.filter(x=>x.cost!=null).sort(sorters.cost);ob={n:r.length,best:s.find(x=>x.mpct>=5)||s[0]}}
+   if(!SPLAN)SPLAN=wkPlantPlan(5);const pl=SPLAN[out]&&(!incN||SPLAN[out].ids.includes(incN))?SPLAN[out]:null,ess=out===GF_ESS||out===GF_VIT;
+   const oname=other==="adv"?"Chaudron avancé":"Chaudron de base";
+   const cards=(ob?(ob.best?`<div class="card"><span class="k">${oname} · ${ob.n} recette${ob.n>1?"s":""}</span>${recipeHTML(ob.best.ids)}<div class="stats"><span>Marge ${mpill(ob.best)}</span><span>Coût <b>${cu(ob.best.cost)}</b></span></div><button class="btn ghost sm" type="button" data-sall="${other}">${ob.n>1?`Voir les ${ob.n} recettes`:"Voir la recette"}</button></div>`:`<div class="card"><span class="k">${oname}</span><span class="note">Aucune recette avec ces filtres.</span></div>`):"")+
+     (pl?`<div class="card"><span class="k">🌿 Avec des plantes</span>${recipeHTML(pl.ids.map(x=>IDX[x]))} ${pl.mode==="adv"?'<span class="pill adv">avancé</span>':'<span class="pill">base</span>'}<div class="acts"><button class="btn ghost sm" type="button" data-sallp="${esc(out)}">🌿 Chaîne plantes</button><button class="btn ghost sm" type="button" data-sallg="${esc(out)}">Usine verte</button></div></div>`:"")+
+     (ess&&!incN?`<div class="card"><span class="k">🌀 Creuset de paradoxe</span><span class="note">${out===GF_ESS?"N'importe quel objet → 1 essence d'oubli (1500 ÷ valeur secondes, 0,5 s au mieux).":"Essence d'oubli → essence de vitalité (5 s)."}</span><button class="btn ghost sm" type="button" data-sallc="1">Ouvrir le creuset</button></div>`:"");
+   return`<h3>Toutes les façons d'obtenir ${ico(out)}${esc(FR[IDX[out]])}${incN?` avec ${ico(incN)}${esc(FR[inc])}`:""}</h3>${tg?`<p class="note">Chaudron ${MODE==="adv"?"avancé":"de base"} (mode choisi en haut) : cartes et liste ci-dessous.</p>`:""}
+   ${cards?`<div class="cards">${cards}</div>`:""}
+   ${make.length?`<details${tg?"":" open"}><summary>Machines du jeu (${make.length})</summary><div class="tbl"><table><thead><tr><th>Machine</th><th>Ingrédients</th><th class="r">Donne</th><th class="r">Temps</th><th class="r">Coût / unité</th><th></th></tr></thead><tbody>${make.map(o=>recRow(o,false)).join("")}</tbody></table></div></details>`:`<p class="note">Aucune recette de machine${incN?" avec cet ingrédient":""}${tg?" : s'obtient au chaudron.":"."}</p>`}`};
+ $("s-all").addEventListener("click",e=>{const m=e.target.closest("[data-sall]");if(m){setMode(m.dataset.sall);return}
+   const p=e.target.closest("[data-sallp]");if(p){const n=p.dataset.sallp;$("wk-item").value=FR[IDX[n]];show("atelier");wkPlantBuild(n,+$("wk-rate").value||10,$("wk-sale").checked&&SELL[n]!=null);return}
+   const g=e.target.closest("[data-sallg]");if(g){show("green");setTimeout(()=>showDetail(g.dataset.sallg),0);return}
+   if(e.target.closest("[data-sallc]"))show("ess")});
+}
 let startTab=store.get("wc-tab","discover");const h=(location.hash||"").slice(1);if(TABS.includes(h))startTab=h;
 $("s-out").value=startOut;$("s-outq").value=frOf(startOut);$("m-a").value=frOf(startSim[0]||"");$("m-b").value=frOf(startSim[1]||"");$("m-c").value=startSim[2]?frOf(startSim[2]):"";
 const su=store.get("wc-use","Flax");if(IDX[su]!=null)$("u-in").value=FR[IDX[su]];
