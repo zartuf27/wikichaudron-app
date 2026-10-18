@@ -339,6 +339,7 @@ text.wk-rate{font:600 11px var(--f-mono);fill:var(--ink);text-anchor:middle;poin
     <label class="chk"><input type="checkbox" id="s-safe"> Marge sûre seulement</label>
     <div class="chips" id="s-cats" aria-label="Catégories d'ingrédients autorisées"></div>
   </div>
+  <div id="s-chains" class="panel"></div>
   <div id="s-all" class="panel"></div>
   <div id="s-cards" class="cards"></div>
   <div class="row"><h3 id="s-count"></h3><span class="note">Coûts hors combustible du chaudron.</span></div>
@@ -744,7 +745,7 @@ function runSearch(){clearTimeout(sTimer);sTimer=setTimeout(()=>{
   const cheapest=byCost.find(r=>r.mpct>=5)||byCost[0];
   const stableCheap=byCost.find(r=>r!==cheapest&&r.mpct>=safeM&&r.mpct>0);
   const resaleBest=[...res].filter(r=>r.gainResale!=null).sort(sorters.resale)[0];
-  $("s-all").innerHTML=window.searchAll?searchAll(out,o):"";
+  $("s-all").innerHTML=window.searchAll?searchAll(out,o):"";if(window.searchChains)searchChains(out,o);
   $("s-cards").innerHTML=card(true,cheapest&&cheapest.mpct>=5?"Top recette · meilleur prix (marge ≥ 5 %)":"Top recette · meilleur prix",cheapest)+(cheapest&&cheapest.mpct>=safeM&&!stableCheap?`<div class="card"><span class="k">Marge sûre (≥ ${safeM} %)</span><span class="note">La recette n°1 a déjà une marge sûre.</span></div>`:card(false,`Meilleur prix avec marge sûre (≥ ${safeM} %)`,stableCheap))+
     (resaleBest?card(false,"Meilleur gain vs revendre les ingrédients",resaleBest,`<span>vs revente <b>${money(resaleBest.gainResale)}</b></span>`):card(false,"Gain vs revente",null));
   res.sort(sorters[$("s-sort").value]);
@@ -945,13 +946,13 @@ function openSheet(n){const i=IDX[n];if(i==null)return;const x=XI[n]||[0,0,0,[],
   const make=R.make.filter(o=>!o.hid||$("b-hid").checked),use=R.use;
   const bestRec=make.map(o=>({o,c:recCost(o)})).filter(z=>z.c!=null).sort((a,b)=>a.c-b.c)[0];
   const acts=`${bm?`<div class="sh-best"><span class="k">Meilleure recette · ${MODE==="adv"?"chaudron avancé":"chaudron de base"}</span>${recipeHTML(bm.ids)} ${mpill(bm)} <span class="en">${cu(bm.cost)}</span></div>`:""}<div class="acts">${bm?`<button class="btn" type="button" data-go="simbest" data-n="${esc(n)}" data-ids="${esc(bm.ids.map(k=>NAME[k]).join("|"))}">Simuler cette recette</button>`:""}${t!=null?`<button class="btn ghost" type="button" data-go="search" data-n="${esc(n)}">Toutes les recettes</button>`:""}<button class="btn ghost" type="button" data-towk="${esc(n)}">▶ Chaîne dans l'atelier</button>${t!=null||window.PLANT_INFO.DER[n]?`<button class="btn ghost" type="button" data-towkp="${esc(n)}">🌿 Chaîne plantes</button>`:""}<button class="btn ghost" type="button" data-go="use" data-n="${esc(n)}">Ce qu'il permet au chaudron</button>${bm?"":`<button class="btn ghost" type="button" data-go="sim" data-n="${esc(n)}">Mettre dans le simulateur</button>`}${t!=null&&!HIDDEN.has(n)?`<button class="btn ghost" type="button" data-go="plan" data-n="${esc(n)}">Planifier</button>`:""}</div>`;
-  $("sheet-body").innerHTML=`<div class="sh-head">${icoSrc(n)?`<img class="ico xl" src="${icoSrc(n)}" alt="">`:""}<div><h2>${esc(FR[i])}</h2><div class="en">${esc(n)}</div><div class="acts" style="margin-top:6px"><span class="cat" style="--cc:var(${CATS[CAT[i]][1]})">${CATS[CAT[i]][0]}</span>${x[3].map(g=>`<span class="pill">${esc(g)}</span>`).join("")}${HIDDEN.has(n)?'<span class="pill thin">absent ?</span>':""}${t!=null?'<span class="pill ok">fabricable au chaudron</span>':""}</div></div></div>${acts}
+  $("sheet-body").innerHTML=`<div class="sh-head">${icoSrc(n)?`<img class="ico xl" src="${icoSrc(n)}" alt="">`:""}<div><h2>${esc(FR[i])}</h2><div class="en">${esc(n)}</div><div class="acts" style="margin-top:6px"><span class="cat" style="--cc:var(${CATS[CAT[i]][1]})">${CATS[CAT[i]][0]}</span>${x[3].map(g=>`<span class="pill">${esc(g)}</span>`).join("")}${HIDDEN.has(n)?'<span class="pill thin">absent ?</span>':""}${t!=null?'<span class="pill ok">fabricable au chaudron</span>':""}</div></div></div>${acts}<div id="sh-chains"></div>
   <div class="kv"><div><span>Valeur au chaudron</span><b class="num">${fmt(VAL[i])}</b></div><div><span>Cible</span><b class="num">${t!=null?fmt(t):"—"}</b></div><div><span>Coût</span><b>${cu(COST[i])}</b></div><div><span>Vente (base)</span><b>${sell!=null?cu(sell):(PRICE[n]!=null?cu(PRICE[n]):"—")}</b></div><div><span>Boutique</span><b>${st}</b></div><div><span>Pile max</span><b class="num">${x[0]||"—"}</b></div>${x[2]?`<div><span>Combustible</span><b class="num">${fmt(x[2])} P</b></div>`:""}${x[5]?'<div><span>État</span><b>Liquide</b></div>':""}</div>
   ${make.length?`<h3>Se fabrique</h3><div class="tbl"><table><thead><tr><th>Machine</th><th>Ingrédients</th><th class="r">Donne</th><th class="r">Temps</th><th class="r">Coût / unité</th><th></th></tr></thead><tbody>${make.map(o=>recRow(o,false)).join("")}</tbody></table></div>${bestRec&&COST[i]!=null&&bestRec.c<COST[i]-1e-9?`<p class="note">La recette la moins chère revient à ${fmt(bestRec.c)} cu, contre ${fmt(COST[i])} cu retenus. <button class="btn sm" type="button" data-setcost="${esc(n)}" data-v="${bestRec.c}">Utiliser ce coût</button></p>`:""}`:`<p class="note">${t!=null?"Aucune recette de machine : s'obtient au chaudron.":"Aucune recette de machine (achat, récolte ou autre source)."}</p>`}
   ${cauld}
   ${use.length?`<h3>Sert à fabriquer (${use.length})</h3><div class="tbl"><table><thead><tr><th>Machine</th><th>Ingrédients</th><th>Produit</th><th class="r">Temps</th><th class="r">Coût / unité</th><th></th></tr></thead><tbody>${use.map(o=>recRow(o,true)).join("")}</tbody></table></div>`:""}
 `;
-  const d=$("sheet");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","")}
+  const d=$("sheet");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");if(window.sheetChains)sheetChains(n)}
 document.addEventListener("click",e=>{const it=e.target.closest("[data-item]");if(it&&!e.target.closest("button,input,select,a")){e.preventDefault();e.stopPropagation();openSheet(it.dataset.item)}},true);
 $("sheet-close").addEventListener("click",()=>{const d=$("sheet");if(d.close)d.close();else d.removeAttribute("open")});
 $("sheet").addEventListener("click",e=>{if(e.target===$("sheet")){$("sheet").close?.()}
@@ -2060,6 +2061,65 @@ gameChip();
    const p=e.target.closest("[data-sallp]");if(p){const n=p.dataset.sallp;$("wk-item").value=FR[IDX[n]];show("atelier");wkPlantBuild(n,+$("wk-rate").value||10,$("wk-sale").checked&&SELL[n]!=null);return}
    const g=e.target.closest("[data-sallg]");if(g){show("green");setTimeout(()=>showDetail(g.dataset.sallg),0);return}
    if(e.target.closest("[data-sallc]"))show("ess")});
+}
+/* ===== v29 : chaînes complètes d'un produit, depuis le début (Je veux fabriquer…) ===== */
+{/* une chaîne : la recette finale imposée, chaque entrée par la chaîne habituelle (wkDefault, mêmes choix que « Construire la chaîne »),
+    plantes et graines au coût de culture, achats au coût retenu ; taille = bâtiment final à 100 % */
+ const PI=window.PLANT_INFO;
+ function chainDesign(P,top,DEF){const k=SET.speed/100,N={},order=[];
+   const visit=(item,path,d)=>{if(N[item])return N[item];const def=d===0?top:(d>=14?{kind:"src",item}:DEF(item,path)),node={...def,item},p=wkPorts(node);node.p=p;N[item]=node;
+     const np=new Set(path);np.add(item);uniqIns(p).forEach(([i])=>visit(i,np,d+1));order.push(node);return node};
+   const fin=visit(P,new Set([P]),0);
+   const T=n=>n.kind==="cau"?n.p.T:n.kind==="rec"?n.p.o.time/machMult(n.p.o.t):n.kind==="pdx"?n.p.T:null;
+   if(!fin.p.outs.length||fin.p.outs[0].item!==P||!T(fin)||(fin.p.p??1)<=0)return null;
+   const rate=60*k/T(fin)*fin.p.outs[0].q*(fin.p.p??1),rev=order.slice().reverse();let D,RUN,BY,USED={};
+   for(let it=0;it<40;it++){D={};RUN={};BY={};D[P]=rate;
+     rev.forEach(n=>{const need=Math.max(0,(D[n.item]||0)-(USED[n.item]||0));if(n.kind==="src"){RUN[n.item]=need;return}
+       const oq=n.p.outs[0]?n.p.outs[0].q:1,pp=n.p.p??1,r=pp>0?need/(oq*pp):0;RUN[n.item]=r;uniqIns(n.p).forEach(([i,q])=>D[i]=(D[i]||0)+r*q);(n.p.byp||[]).forEach(([i,q])=>BY[i]=(BY[i]||0)+r*q)});
+     const nu={};Object.keys(BY).forEach(i=>{if(D[i]>0)nu[i]=Math.min(BY[i],D[i])});const same=Object.keys({...nu,...USED}).every(i=>Math.abs((USED[i]||0)-(nu[i]||0))<1e-9);USED=nu;if(same)break}
+   let cost=0,fuelP=0,buildings=0,unknown=false;const buy=[];
+   order.forEach(n=>{const r=RUN[n.item]||0;
+     if(n.kind==="src"){const pl=PI&&(PI.HERBS.includes(n.item)||PI.SEEDS.includes(n.item)),u=pl?(PI.plantCost(n.item)??COST[IDX[n.item]]):COST[IDX[n.item]];if(u==null&&r>0)unknown=true;cost+=r*(u||0);if(r>1e-9)buy.push([n.item,r,pl]);return}
+     const m=n.kind==="rec"?r*n.p.o.time/k/60/machMult(n.p.o.t):r*T(n)/k/60;buildings+=Math.ceil(m-1e-9);
+     if(n.kind==="cau"){const tg=TARGETS[n.p.r.out];fuelP+=r*craftHeat(tg)*craftTime(tg)}else if(n.kind==="pdx"||n.p.o.t===21)fuelP+=r*1200*(n.kind==="pdx"?T(n):n.p.o.time)});
+   if(unknown)return null;const fpp=fuelPerP();if(SET.countFuel&&fpp!=null)cost+=fuelP*fpp;
+   const val=SELL[P]!=null?SELL[P]:(BASECOST[P]&&!HIDDEN.has(P)?BASECOST[P][0]:null);if(val==null)return null;
+   const profit=val*rate-cost;return{P,top:fin,rate,val,cost,profit,buildings,per:buildings?profit/buildings:profit,steps:order.filter(n=>n.kind!=="src").length,buy}}
+ const sig=d=>d.top.kind==="rec"?"r:"+d.top.rec:d.top.kind==="cau"?"c:"+d.top.mode+":"+d.top.ids.slice().sort().join("+"):"x";
+ let CACHE={};const _mdC=markDirty;markDirty=function(){_mdC();CACHE={}};
+ /* toutes les recettes finales possibles : machines du jeu, 20 recettes au chaudron les moins chères par chaudron, usines vertes */
+ function chainOptions(P,O){const key=JSON.stringify([P,O.inc,O.exc,O.uniq,O.known,COMMON,MODE]);if(CACHE[key])return CACHE[key];
+   const memo={},DEF=(item,path)=>{const m=memo[item],uses=m&&(m.kind==="rec"?(RECIPES.find(r=>r.id===m.rec)||{ings:[]}).ings.some(([i])=>path.has(i)):m.kind==="cau"?m.ids.some(i=>path.has(i)):false);
+     if(m&&!uses)return m;const d=wkDefault(item,path);if(!m)memo[item]=d;return d};
+   const incN=O.inc>=0?NAME[O.inc]:null,list=[];
+   (RIDX[P]||{make:[]}).make.filter(o=>!o.hid&&(o.p??1)>0&&isUnl(o.id)&&!o.ings.some(([i])=>i===P)&&(!incN||o.ings.some(([i])=>i===incN))).forEach(o=>{const d=chainDesign(P,{kind:"rec",rec:o.id},DEF);if(d)list.push(d)});
+   if(TARGETS[P]!=null&&!HIDDEN.has(P)){const keep=MODE;for(const m of["basic","adv"]){let r=[];MODE=m;try{r=searchFor(P,{...O,safe:false})}finally{MODE=keep}
+     const s=r.filter(x=>x.cost!=null&&!x.ids.includes(IDX[P])).sort((a,b)=>a.cost-b.cost),g=s.filter(x=>x.mpct>=5);(g.length?g:s).slice(0,20).forEach(x=>{const d=chainDesign(P,{kind:"cau",mode:m,ids:x.ids.map(i=>NAME[i])},DEF);if(d){d.mpct=x.mpct;list.push(d)}})}}
+   if(typeof gfDesign==="function"&&!incN)[false,true].forEach(cheap=>{const o={minm:5,common:COMMON,pdx:true,cheap},plan=gfPlan(5,o),g=gfDesign(P,null,o,plan);
+     if(g&&g.green)list.push({...g,green:true,o,plan,steps:g.nodes.filter(x=>x.n.kind!=="src").length,buy:g.buy.concat(Object.entries(g.harvest).map(([n,v])=>[n,v,true]))})});
+   const best={};list.forEach(d=>{const s=sig(d)+(d.green?":v":"");if(!best[s]||d.profit>best[s].profit)best[s]=d});const all=Object.values(best);
+   const rich=all.slice().sort((a,b)=>b.profit-a.profit),first=rich[0],second=rich.find(d=>d!==first&&sig(d)!==sig(first)),pos=all.filter(d=>d.profit>0);
+   const short=(pos.length?pos:all).slice().sort((a,b)=>a.steps-b.steps||a.buildings-b.buildings||b.profit-a.profit)[0];
+   return CACHE[key]={n:all.length,first,second,short}}
+ const finalHTML=d=>{const n=d.top;if(n.kind==="cau")return`${recipeHTML(n.ids.map(x=>IDX[x]))} ${n.mode==="adv"?'<span class="pill adv">avancé</span>':'<span class="pill">base</span>'}${d.mpct!=null?" "+mpill({out:d.P,margin:1,mpct:d.mpct}):""}`;
+   if(n.kind==="rec")return`${mIco(n.p.o.t)} ${esc(machName(n.p.o.t))} : ${ingChips(n.p.o.ings)}`;if(n.kind==="pdx")return`${mIco(21)} ${esc(machName(21))} ← ${esc(FR[IDX[n.from]])}`;return""};
+ const buyHTML=d=>{const t=d.buy.slice().sort((a,b)=>b[1]-a[1]).slice(0,4);return t.map(([n,v,pl])=>`${pl?"🌱":"🛒"} ${esc(FR[IDX[n]])} ${fmt(v)}`).join(" · ")+(d.buy.length>4?" …":"")};
+ const ccard=(t,d,top,k)=>d?`<div class="card${top?" top":""}"><span class="k">${t}${d.green?" · 🌿 usine verte":""}</span><div>${finalHTML(d)}</div>
+   <div class="stats"><span>Bénéfice <b>${money(d.profit)}</b>/min</span><span>Par bâtiment <b>${money(d.per)}</b></span><span><b class="num">${d.steps}</b> étape${d.steps>1?"s":""} · <b class="num">${d.buildings}</b> bâtiment${d.buildings>1?"s":""}</span><span><b class="num">${fmt(d.rate)}</b>/min</span><span class="en">${buyHTML(d)} /min</span></div>
+   <div class="acts"><button class="btn ghost sm" type="button" data-chwk="${k}">▶ Atelier</button></div></div>`:"";
+ let LAST=null;
+ window.searchChains=function(out,O){const el=$("s-chains");if(!el)return;if(!out||IDX[out]==null){el.innerHTML="";return}
+   el.innerHTML=`<p class="note">Calcul des chaînes complètes…</p>`;setTimeout(()=>{const t0=performance.now(),r=chainOptions(out,O);LAST=r;
+     el.innerHTML=chainsHTML(r,out,O)},0)};
+ const chainsHTML=(r,out,O)=>r.n?`<h3>🏆 Chaînes complètes, depuis le début <small class="en">${r.n} chaîne${r.n>1?"s":""} comparée${r.n>1?"s":""} · ${SELL[out]!=null?"vente":"valeur au coût de base"} · 1 bâtiment final à plein régime</small></h3><div class="cards">${ccard("1 · La plus rentable",r.first,true,"first")}${ccard("2 · Deuxième plus rentable",r.second,false,"second")}${ccard("3 · La plus courte (le moins d'étapes)",r.short,false,"short")}</div>`:`<p class="note">Aucune chaîne complète calculable${O.inc>=0?" avec cet ingrédient":""} (coût d'un achat inconnu ?).</p>`;
+ $("s-chains").addEventListener("click",e=>{const b=e.target.closest("[data-chwk]");if(!b||!LAST)return;const d=LAST[b.dataset.chwk];if(!d)return;const P=d.P;
+   $("wk-item").value=FR[IDX[P]];$("wk-rate").value=+d.rate.toFixed(2);show("atelier");
+   if(d.green){wkPlantBuild(P,d.rate,SELL[P]!=null,{...d.o,$plan:d.plan});return}
+   const top=d.top,base={kind:top.kind,rec:top.rec,mode:top.mode,ids:top.ids?top.ids.slice():undefined};wkBuild(P,d.rate,SELL[P]!=null,(item,path)=>item===P&&path.size===1?{...base}:wkDefault(item,path))});
+ window.sheetChains=function(n){const el=$("sh-chains");if(!el)return;if(TARGETS[n]==null&&!((RIDX[n]||{make:[]}).make.some(o=>!o.hid))){el.innerHTML="";return}
+   el.innerHTML=`<p class="note">Calcul des chaînes complètes…</p>`;setTimeout(()=>{if(!$("sh-chains"))return;const O={inc:-1,exc:-1,uniq:false,known:true},r=chainOptions(n,O);LAST=r;$("sh-chains").innerHTML=chainsHTML(r,n,O)},0)};
+ $("sheet").addEventListener("click",e=>{const b=e.target.closest("#sh-chains [data-chwk]");if(!b)return;e.stopPropagation();$("sheet").close?.();$("s-chains").dispatchEvent(new CustomEvent("chwk",{detail:b.dataset.chwk}))});
+ $("s-chains").addEventListener("chwk",e=>{const f=document.createElement("button");f.dataset.chwk=e.detail;$("s-chains").appendChild(f);f.click();f.remove()});
 }
 let startTab=store.get("wc-tab","discover");const h=(location.hash||"").slice(1);if(TABS.includes(h))startTab=h;
 $("s-out").value=startOut;$("s-outq").value=frOf(startOut);$("m-a").value=frOf(startSim[0]||"");$("m-b").value=frOf(startSim[1]||"");$("m-c").value=startSim[2]?frOf(startSim[2]):"";
