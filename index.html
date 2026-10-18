@@ -334,7 +334,7 @@ text.wk-rate{font:600 11px var(--f-mono);fill:var(--ink);text-anchor:middle;poin
     <label class="f">Doublons<select id="s-dup"><option value="any">Autorisés</option><option value="uniq">Objets tous différents</option></select></label>
     <label class="f" title="Le produit doit utiliser cet ingrédient : l'app complète le reste">Avec l'ingrédient<input type="text" id="s-inc" list="dl-items" placeholder="Peu importe" autocomplete="off"></label>
     <label class="f">Exclure<input type="text" id="s-exc" list="dl-items" placeholder="Rien" autocomplete="off"></label>
-    <label class="f">Trier par<select id="s-sort"><option value="cost">Coût le plus bas</option><option value="profit">Bénéfice à la vente</option><option value="resale">Gain vs revente des ingrédients</option><option value="margin">Recette la plus stable</option><option value="simple">Moins d'ingrédients différents</option></select></label>
+    <label class="f">Chaudron<select id="s-cau"><option value="both">les deux</option><option value="basic">de base (3 ingrédients)</option><option value="adv">avancé (2 ingrédients)</option></select></label><label class="f">Trier par<select id="s-sort"><option value="cost">Coût le plus bas</option><option value="profit">Bénéfice à la vente</option><option value="resale">Gain vs revente des ingrédients</option><option value="margin">Recette la plus stable</option><option value="simple">Moins d'ingrédients différents</option></select></label>
     <label class="chk"><input type="checkbox" id="s-known" checked> Seulement les recettes au coût connu</label>
     <label class="chk"><input type="checkbox" id="s-safe"> Marge sûre seulement</label>
     <div class="chips" id="s-cats" aria-label="Catégories d'ingrédients autorisées"></div>
@@ -343,7 +343,8 @@ text.wk-rate{font:600 11px var(--f-mono);fill:var(--ink);text-anchor:middle;poin
   <div id="s-all" class="panel"></div>
   <div id="s-cards" class="cards"></div>
   <div class="row"><h3 id="s-count"></h3><span class="note">Coûts hors combustible du chaudron.</span></div>
-  <div class="tbl"><table><thead><tr><th>Recette</th><th class="r">Somme</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Bénéfice</th><th class="r">vs revente</th><th></th></tr></thead><tbody id="s-body"></tbody></table></div>
+  <div class="tbl"><table><thead><tr><th>Recette</th><th>Chaudron</th><th class="r">Somme</th><th class="r">Marge</th><th class="r">Coût</th><th class="r">Bénéfice</th><th class="r">vs revente</th><th></th></tr></thead><tbody id="s-body"></tbody></table></div>
+  <div class="row" id="s-pager"></div>
 </section>
 
 <section id="p-use" class="wrap" style="gap:16px" hidden>
@@ -738,7 +739,8 @@ function runSearch(){clearTimeout(sTimer);sTimer=setTimeout(()=>{
   const out=$("s-out").value;
   const o={uniq:$("s-dup").value==="uniq",inc:pickItem($("s-inc").value),exc:pickItem($("s-exc").value),known:$("s-known").checked,safe:false};
   store.set("wc-out",out);
-  const t0=performance.now();const res0=searchFor(out,o);const dt=performance.now()-t0;
+  const cauSel=$("s-cau").value,modes=cauSel==="both"?["basic","adv"]:[cauSel],t0=performance.now(),keepM=MODE;let res0=[];
+  try{modes.forEach(m=>{MODE=m;res0=res0.concat(searchFor(out,o))})}finally{MODE=keepM}const dt=performance.now()-t0;store.set("wc-scau",cauSel);
   const maxM=Math.max(0,...res0.map(r=>r.mpct)),safeM=maxM>0?Math.floor(Math.min(10,maxM/2)):10,res=$("s-safe").checked?res0.filter(r=>r.mpct>=safeM&&r.mpct>0):res0;
   const withCost=res.filter(r=>r.cost!=null);
   const byCost=[...withCost].sort(sorters.cost);
@@ -750,10 +752,16 @@ function runSearch(){clearTimeout(sTimer);sTimer=setTimeout(()=>{
     (resaleBest?card(false,"Meilleur gain vs revendre les ingrédients",resaleBest,`<span>vs revente <b>${money(resaleBest.gainResale)}</b></span>`):card(false,"Gain vs revente",null));
   res.sort(sorters[$("s-sort").value]);
   const warnInc=$("s-inc").value&&o.inc<0?" · ingrédient « doit contenir » non reconnu":"",warnExc=$("s-exc").value&&o.exc<0?" · ingrédient « exclure » non reconnu":"";
-  $("s-count").textContent=`${res.length.toLocaleString("fr-CH")} recettes pour ${frOf(out)} (${MODE==="adv"?"chaudron avancé":"chaudron de base"})${res.length>150?" · 150 premières affichées":""} · ${dt<1?"<1":Math.round(dt)} ms${warnInc}${warnExc}`;
-  $("s-body").innerHTML=res.length?res.slice(0,150).map(r=>`<tr><td>${recipeHTML(r.ids)}</td><td class="r num">${fmt(r.s)}</td><td class="r">${mpill(r)}</td><td class="r">${cu(r.cost)}</td><td class="r">${money(r.profit)}</td><td class="r">${money(r.gainResale)}</td><td><span class="acts">${starBtn(r)}${copyBtn(r)}</span></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Aucune recette. Décoche « coût connu » ou « Objets courants seulement » (en haut), retire un filtre ou réactive des catégories.</td></tr>`;
+  const nB=res.filter(r=>r.ids.length===3).length,nA=res.length-nB,key=out+"|"+cauSel+"|"+res.length;if(sPg.key!==key){sPg.key=key;sPg.p=0;sPg.all=false}
+  const per=sPg.all?Infinity:300,pages=Math.max(1,Math.ceil(res.length/per)),p0=Math.min(sPg.p,pages-1),shown=res.slice(p0*per,(p0+1)*per);
+  $("s-count").textContent=`${res.length.toLocaleString("fr-CH")} combinaisons pour ${frOf(out)}${cauSel==="both"?` (base ${nB.toLocaleString("fr-CH")} · avancé ${nA.toLocaleString("fr-CH")})`:cauSel==="adv"?" (chaudron avancé)":" (chaudron de base)"}${res.length>shown.length?` · lignes ${(p0*per+1).toLocaleString("fr-CH")}–${(p0*per+shown.length).toLocaleString("fr-CH")}`:""} · ${dt<1?"<1":Math.round(dt)} ms${warnInc}${warnExc}`;
+  $("s-pager").innerHTML=res.length>300?`<button class="btn ghost sm" type="button" data-spg="-1" ${p0===0||sPg.all?"disabled":""}>‹ Précédent</button><span class="en">page ${sPg.all?1:p0+1} / ${pages}</span><button class="btn ghost sm" type="button" data-spg="1" ${p0>=pages-1||sPg.all?"disabled":""}>Suivant ›</button><button class="btn ghost sm" type="button" data-spg="all">${sPg.all?"Par pages de 300":`Tout afficher (${res.length.toLocaleString("fr-CH")})`}</button>`:"";
+  $("s-body").innerHTML=res.length?shown.map(r=>`<tr><td>${recipeHTML(r.ids)}</td><td>${r.ids.length===2?'<span class="pill adv">avancé</span>':'<span class="pill">base</span>'}</td><td class="r num">${fmt(r.s)}</td><td class="r">${mpill(r)}</td><td class="r">${cu(r.cost)}</td><td class="r">${money(r.profit)}</td><td class="r">${money(r.gainResale)}</td><td><span class="acts">${starBtn(r)}${copyBtn(r)}</span></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Aucune recette. Décoche « coût connu » ou « Objets courants seulement » (en haut), retire un filtre ou réactive des catégories.</td></tr>`;
 },30)}
-["s-out","s-dup","s-sort","s-known","s-safe"].forEach(id=>$(id).addEventListener("change",runSearch));
+const sPg={key:"",p:0,all:false};
+["s-out","s-dup","s-sort","s-known","s-safe","s-cau"].forEach(id=>$(id).addEventListener("change",runSearch));
+{const v=store.get("wc-scau","both");if(["both","basic","adv"].includes(v))$("s-cau").value=v}
+$("s-pager").addEventListener("click",e=>{const b=e.target.closest("[data-spg]");if(!b)return;const a=b.dataset.spg;if(a==="all")sPg.all=!sPg.all;else sPg.p=Math.max(0,sPg.p+(+a));runSearch();$("s-count").scrollIntoView&&$("s-count").scrollIntoView({block:"start"})});
 ["s-inc","s-exc"].forEach(id=>$(id).addEventListener("input",runSearch));
 
 function bestPerOutput(idx,opts){const best={};const o=opts||{};const ci=i=>o.eff?Math.max(COST[i],SELLI[i]||0):COST[i];
@@ -2047,14 +2055,14 @@ gameChip();
  let SPLAN=null;const _mdG=markDirty;markDirty=function(){_mdG();SPLAN=null;PI.reset()};
  window.searchAll=function(out,O){if(!out||IDX[out]==null)return"";const inc=O?O.inc:-1,incN=inc>=0?NAME[inc]:null;
    const make=(RIDX[out]||{make:[]}).make.filter(o=>!o.hid&&(!incN||o.ings.some(([i])=>i===incN)));
-   const other=MODE==="adv"?"basic":"adv",tg=TARGETS[out]!=null&&!HIDDEN.has(out);let ob=null;
-   if(tg){const keep=MODE;MODE=other;let r=[];try{r=searchFor(out,{...O,safe:false})}finally{MODE=keep}const s=r.filter(x=>x.cost!=null).sort(sorters.cost);ob={n:r.length,best:s.find(x=>x.mpct>=5)||s[0]}}
+   const other=($("s-cau").value==="both"?MODE:$("s-cau").value)==="adv"?"basic":"adv",tg=TARGETS[out]!=null&&!HIDDEN.has(out);let ob=null;
+   if(tg&&$("s-cau").value!=="both"){const keep=MODE;MODE=other;let r=[];try{r=searchFor(out,{...O,safe:false})}finally{MODE=keep}const s=r.filter(x=>x.cost!=null).sort(sorters.cost);ob={n:r.length,best:s.find(x=>x.mpct>=5)||s[0]}}
    if(!SPLAN)SPLAN=wkPlantPlan(5);const pl=SPLAN[out]&&(!incN||SPLAN[out].ids.includes(incN))?SPLAN[out]:null,ess=out===GF_ESS||out===GF_VIT;
    const oname=other==="adv"?"Chaudron avancé":"Chaudron de base";
    const cards=(ob?(ob.best?`<div class="card"><span class="k">${oname} · ${ob.n} recette${ob.n>1?"s":""}</span>${recipeHTML(ob.best.ids)}<div class="stats"><span>Marge ${mpill(ob.best)}</span><span>Coût <b>${cu(ob.best.cost)}</b></span></div><button class="btn ghost sm" type="button" data-sall="${other}">${ob.n>1?`Voir les ${ob.n} recettes`:"Voir la recette"}</button></div>`:`<div class="card"><span class="k">${oname}</span><span class="note">Aucune recette avec ces filtres.</span></div>`):"")+
      (pl?`<div class="card"><span class="k">🌿 Avec des plantes</span>${recipeHTML(pl.ids.map(x=>IDX[x]))} ${pl.mode==="adv"?'<span class="pill adv">avancé</span>':'<span class="pill">base</span>'}<div class="acts"><button class="btn ghost sm" type="button" data-sallp="${esc(out)}">🌿 Chaîne plantes</button><button class="btn ghost sm" type="button" data-sallg="${esc(out)}">Usine verte</button></div></div>`:"")+
      (ess&&!incN?`<div class="card"><span class="k">🌀 Creuset de paradoxe</span><span class="note">${out===GF_ESS?"N'importe quel objet → 1 essence d'oubli (1500 ÷ valeur secondes, 0,5 s au mieux).":"Essence d'oubli → essence de vitalité (5 s)."}</span><button class="btn ghost sm" type="button" data-sallc="1">Ouvrir le creuset</button></div>`:"");
-   return`<h3>Toutes les façons d'obtenir ${ico(out)}${esc(FR[IDX[out]])}${incN?` avec ${ico(incN)}${esc(FR[inc])}`:""}</h3>${tg?`<p class="note">Chaudron ${MODE==="adv"?"avancé":"de base"} (mode choisi en haut) : cartes et liste ci-dessous.</p>`:""}
+   return`<h3>Toutes les façons d'obtenir ${ico(out)}${esc(FR[IDX[out]])}${incN?` avec ${ico(incN)}${esc(FR[inc])}`:""}</h3>${tg?`<p class="note">${$("s-cau").value==="both"?"Chaudron de base et chaudron avancé":$("s-cau").value==="adv"?"Chaudron avancé":"Chaudron de base"} : cartes et liste complète des combinaisons ci-dessous.</p>`:""}
    ${cards?`<div class="cards">${cards}</div>`:""}
    ${make.length?`<details${tg?"":" open"}><summary>Machines du jeu (${make.length})</summary><div class="tbl"><table><thead><tr><th>Machine</th><th>Ingrédients</th><th class="r">Donne</th><th class="r">Temps</th><th class="r">Coût / unité</th><th></th></tr></thead><tbody>${make.map(o=>recRow(o,false)).join("")}</tbody></table></div></details>`:`<p class="note">Aucune recette de machine${incN?" avec cet ingrédient":""}${tg?" : s'obtient au chaudron.":"."}</p>`}`};
  $("s-all").addEventListener("click",e=>{const m=e.target.closest("[data-sall]");if(m){setMode(m.dataset.sall);return}
